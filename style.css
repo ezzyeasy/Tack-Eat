@@ -25,13 +25,17 @@ body {
 }
 
 .container {
-  max-width: 720px;
+  max-width: 740px;
   margin: 0 auto;
+}
+
+.hidden {
+  display: none !important;
 }
 
 header {
   text-align: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .badge {
@@ -56,6 +60,63 @@ header h1 {
 header p {
   color: var(--text-muted);
   font-size: 0.95rem;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.45rem;
+  transition: all 0.15s ease;
+}
+
+.nav-link:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link.active {
+  color: var(--emerald);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.auth-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+}
+
+.auth-pill-guest {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+}
+
+.auth-pill-authed {
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--emerald);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 /* Status Banner */
@@ -112,6 +173,19 @@ header p {
   margin-bottom: 0.35rem;
 }
 
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.card-header-flex h2 {
+  margin-bottom: 0;
+}
+
 .hint {
   color: var(--text-muted);
   font-size: 0.875rem;
@@ -126,12 +200,18 @@ code {
   color: #38bdf8;
 }
 
-/* Form Styles */
+/* Forms */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.9rem;
   margin-bottom: 1.1rem;
+}
+
+@media (min-width: 560px) {
+  .form-grid.two-col {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .form-group label {
@@ -165,6 +245,10 @@ input:focus {
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   cursor: pointer;
   border: none;
   border-radius: 0.5rem;
@@ -212,13 +296,114 @@ input:focus {
 .btn-delete {
   background: rgba(239, 68, 68, 0.15);
   color: #fca5a5;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.78rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
 }
 
 .btn-delete:hover {
   background: var(--danger);
   color: #fff;
+}
+
+/* Session & Profile UI */
+.session-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 0.65rem;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.session-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  background: var(--bg);
+  padding: 1rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--border);
+}
+
+.profile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Protected Route Lock Badges & Overlays */
+.lock-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+}
+
+.lock-badge.locked {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.lock-badge.unlocked {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--emerald);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.locked-overlay {
+  text-align: center;
+  padding: 2.25rem 1rem;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px dashed var(--border);
+  border-radius: 0.65rem;
+}
+
+.locked-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.locked-overlay h3 {
+  font-size: 1.05rem;
+  margin-bottom: 0.25rem;
+}
+
+.locked-overlay p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+/* Full-Page Route Guard Loader */
+.guard-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+.guard-card {
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 2rem;
+  max-width: 420px;
 }
 
 /* SQL Helper Box */
@@ -227,10 +412,6 @@ input:focus {
   padding-top: 1.1rem;
   border-top: 1px solid var(--border);
   font-size: 0.85rem;
-}
-
-.sql-helper.hidden {
-  display: none;
 }
 
 .sql-helper pre {
