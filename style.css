@@ -1,0 +1,21 @@
+:root {
+  --primary: #EE3F24;
+  --secondary: #023820;
+  --accent: #F9A11B;
+  --white: #FFEFCD;
+
+  --regular: 400;
+  --bold: 700;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Fredoka", sans-serif;
+  font-family: "Dongle", sans-serif;
+  background-color: var(--white);
+}
