@@ -2,7 +2,8 @@
   --primary: #EE3F24;
   --secondary: #023820;
   --accent: #F9A11B;
-  --white: #FFEFCD;
+  --accent-2: #FFEFCD;
+  --white: #FFF4E6;
 
   --regular: 400;
   --bold: 700;
@@ -18,4 +19,105 @@ body {
   font-family: "Fredoka", sans-serif;
   font-family: "Dongle", sans-serif;
   background-color: var(--white);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+
+  margin-top: 20px;
+  width: 90vw;
+  height: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  padding: 30px;
+
+  background-color: var(--primary);
+  border: 3px solid var(--secondary);
+  border-radius: 35px;
+  box-shadow: 4px 7px 0px var(--secondary);
+}
+
+.logo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 15px;
+  fill: var(--accent-2);
+}
+
+.nav-links {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  color: var(--primary);
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--white);
+  font-weight: var(--bold);
+  font-size: 24px;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-links a:hover {
+  color: var(--accent);
+  transform: translateY(-3px);
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.sign-in {
+  background-color: var(--secondary);
+  color: var(--white);
+  padding: 5px 20px;
+  border-radius: 30px;
+  transition: all 0.2s ease-in-out;
+  width: fit-content;
+
+  text-decoration: none;
+  font-weight: var(--bold);
+  font-size: 24px;
+  white-space: nowrap;
+}
+
+.sign-in:hover {
+  background-color: var(--accent);
+  transform: translateY(-3px);
+  transition: all 0.2s ease-in-out;
+}
+
+.sign-up {
+  background-color: var(--accent);
+  color: var(--white);
+  padding: 5px 20px;
+  border-radius: 30px;
+  transition: all 0.2s ease-in-out;
+  width: fit-content;
+
+  text-decoration: none;
+  font-weight: var(--bold);
+  font-size: 24px;
+  white-space: nowrap;
+}
+
+.sign-up:hover {
+  background-color: var(--secondary);
+  transform: translateY(-3px);
+  transition: all 0.2s ease-in-out;
 }
