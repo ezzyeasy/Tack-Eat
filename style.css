@@ -241,6 +241,10 @@ button {
     width: max(104px, calc(164 * var(--unit)));
   }
 
+  .nav-button {
+    padding-inline: 0;
+  }
+
   .sign-up {
     padding-inline: 1em;
     margin-inline-start: 0;
@@ -261,11 +265,15 @@ button {
 
 @media (max-width: 690px),
 (max-width: 1024px) and (max-aspect-ratio: 4/3) {
+  :root {
+    --hero-gutter: clamp(16px, 4.5vw, 42px);
+  }
+
   .navbar {
     min-height: 0;
     flex-wrap: wrap;
     gap: 4px 12px;
-    padding: 10px 16px 0;
+    padding: 10px var(--hero-gutter) 0;
   }
 
   .nav-brand,
@@ -279,7 +287,13 @@ button {
   }
 
   .nav-button {
-    min-height: 38px;
+    min-height: 40px;
+    padding-inline: 0;
+  }
+
+  .sign-up {
+    margin-inline-start: 0;
+    padding-inline: 1em;
   }
 
   .nav-actions [data-preview="offers"] {
@@ -294,7 +308,7 @@ button {
 
   .hero-copy {
     display: block;
-    padding: 28px 16px 0;
+    padding: 28px var(--hero-gutter) 0;
   }
 
   .hero h1 {
@@ -320,19 +334,18 @@ button {
   .hero-visual {
     position: relative;
     flex: 1;
-    min-height: 48vw;
-    container-type: size;
+    min-height: clamp(18rem, 104vw, 40rem);
   }
 
   .hero-art {
-    inset: 0 auto auto 50%;
-    width: max(136%, 205cqh);
-    transform: translateX(-60%) rotate(-0.7deg);
-    transform-origin: center top;
+    inset: 50% auto auto 50%;
+    width: min(121%, 46rem);
+    transform: translate(-50%, -50%) rotate(-45deg);
+    transform-origin: center;
   }
 }
 
-@media (max-width: 540px) {
+@media (max-width: 600px) {
   .nav-actions {
     flex-basis: 100%;
     justify-content: space-between;
