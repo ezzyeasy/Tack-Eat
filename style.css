@@ -76,7 +76,7 @@ button {
 }
 
 .nav-actions {
-  gap: calc(16 * var(--unit));
+  gap: calc(12 * var(--unit));
 }
 
 .nav-button {
@@ -84,7 +84,7 @@ button {
   align-items: center;
   justify-content: center;
   min-height: max(32px, calc(34 * var(--unit)));
-  padding: 0;
+  padding: 0 20px;
   border: 0;
   border-radius: 1em;
   background: transparent;
@@ -259,7 +259,8 @@ button {
   }
 }
 
-@media (max-width: 690px), (max-width: 1024px) and (max-aspect-ratio: 4/3) {
+@media (max-width: 690px),
+(max-width: 1024px) and (max-aspect-ratio: 4/3) {
   .navbar {
     min-height: 0;
     flex-wrap: wrap;
