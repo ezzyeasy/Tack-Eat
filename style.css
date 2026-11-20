@@ -587,7 +587,7 @@ button {
 /* Form Layout & Underline Inputs (Matching Reference Image) */
 .auth-form,
 .auth-session-view {
-  my: auto;
+  margin: auto;
   width: 100%;
   max-width: 360px;
   margin: auto;
