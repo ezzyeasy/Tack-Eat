@@ -128,7 +128,7 @@ button {
 }
 
 .cart-icon {
-  width: max(17px, calc(18 * var(--unit)));
+  height: 20px;
 }
 
 .chevron {
@@ -240,7 +240,7 @@ button {
   }
 
   .logo img {
-    width: max(104px, calc(164 * var(--unit)));
+    width: 20px;
   }
 
   .nav-button {
