@@ -7,8 +7,11 @@
 }
 
 :root {
-  --primary: #ee3f25;
+  --primary: #ee3f24;
+  --secondary: #023820;
+  --accent: #F9A11B;
   --accent-2: #ffefcd;
+  --white: #FFF4E6;
   --unit: calc(100vw / 1342);
   font-family: Fredoka, sans-serif;
   color: var(--accent-2);
