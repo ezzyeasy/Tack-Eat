@@ -384,11 +384,12 @@ button {
 
 .auth-page-body {
   position: relative;
-  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
   margin: 0;
   background: #ffffff;
   color: #2b1810;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .auth-left-header {
@@ -420,7 +421,8 @@ button {
 .auth-wrapper {
   display: flex;
   width: 100vw;
-  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
   padding: 0;
   margin: 0;
 }
@@ -429,7 +431,8 @@ button {
   display: grid;
   grid-template-columns: 48% 52%;
   width: 100vw;
-  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
   background: #ffffff;
   border-radius: 0;
   overflow: hidden;
@@ -442,7 +445,8 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: clamp(28px, 4vw, 48px);
+  height: 100%;
+  padding: clamp(24px, 3.5vh, 44px) clamp(28px, 4vw, 48px);
   background: linear-gradient(155deg, #044b2c 0%, #023820 55%, #012213 100%);
   color: var(--accent-2);
   overflow: hidden;
@@ -480,14 +484,15 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: auto 0;
-  padding: 20px 0;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 0;
 }
 
 .auth-burger-img {
-  width: 100%;
-  max-width: clamp(240px, 28vw, 390px);
-  height: auto;
+  width: auto;
+  max-width: min(85%, 360px);
+  max-height: 56vh;
   object-fit: contain;
   filter: drop-shadow(0 28px 40px rgb(0 0 0 / 55%));
   transform: rotate(-8deg);
@@ -518,9 +523,11 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: clamp(28px, 4vw, 48px) clamp(32px, 6vw, 88px);
+  height: 100%;
+  padding: clamp(24px, 3.5vh, 44px) clamp(32px, 6vw, 88px);
   background: #ffffff;
   color: #2c2c2c;
+  overflow-y: auto;
 }
 
 /* Top-Right Segmented Log In / Register Toggle */
