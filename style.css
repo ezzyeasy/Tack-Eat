@@ -1,3 +1,7 @@
+/* Secondary Font - Dongle */
+@import url('https://fonts.googleapis.com/css2?family=Dongle:wght@300;400;700&display=swap');
+
+/* Main Font - Fredoka */
 @font-face {
   font-family: Fredoka;
   src: url("fonts/Fredoka/Fredoka-VariableFont_wdth,wght.ttf") format("truetype");
@@ -368,5 +372,210 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .nav-button {
     transition: none;
+  }
+}
+
+/* =========================================
+   CONTACT US SECTION - ADILA
+   ========================================= */
+
+.contact-section {
+  width: 100%;
+  min-height: 615px;
+  padding: 60px 5%;
+  background-color: var(--primary);
+  color: var(--accent-2);
+  font-family: 'Dongle', sans-serif;
+}
+
+.contact-container {
+  display: grid;
+  grid-template-columns: 57% 1fr;
+  gap: 4%;
+  width: 100%;
+  max-width: 1342px;
+  margin: 0 auto;
+}
+
+.contact-left h2 {
+  margin: 0 0 35px;
+  font-size: 105px;
+  font-weight: 700;
+  line-height: 0.72;
+  letter-spacing: -1px;
+}
+
+.contact-form {
+  width: 100%;
+  max-width: 570px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.contact-row {
+  display: flex;
+  gap: 16px;
+}
+
+.contact-row input {
+  width: 50%;
+  min-width: 0;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  background-color: var(--accent-2);
+  color:var(--primary);
+  font-family: 'Dongle', sans-serif;
+  font-size: 23px;
+  padding: 6px 12px;
+  outline: none;
+}
+
+.contact-form input {
+  height: 38px;
+}
+
+.contact-form textarea {
+  height: 115px;
+  resize: vertical;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color:var(--primary);
+  opacity: 1;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: 2px solid white;
+}
+
+.contact-submit {
+  width: 170px;
+  height: 45px;
+  border: none;
+  border-radius: 13px;
+  background-color: var(--accent-2);
+  color: var(--primary);
+  font-family: 'Dongle', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.contact-submit:hover {
+  background-color: white;
+}
+
+.contact-right {
+  border-left: 2px solid var(--accent-2);
+  padding-left: 40px;
+  margin-top: 15px;
+  align-self: start;
+}
+
+.contact-right h3 {
+  margin: 0;
+  font-size: 56px;
+  font-weight: 400;
+  line-height: 0.75;
+}
+
+.contact-divider {
+  width: 60px;
+  height: 2px;
+  background-color: var(--accent-2);
+  margin: 25px 0 15px;
+}
+
+.contact-right p {
+  margin: 0;
+  font-size: 29px;
+  line-height: 0.95;
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 768px) {
+  .contact-section {
+    padding: 50px 6%;
+  }
+
+  .contact-container {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+
+  .contact-left h2 {
+    font-size: 80px;
+  }
+
+  .contact-right {
+    margin-top: 0;
+    padding-left: 25px;
+  }
+
+  .contact-right h3 {
+    font-size: 48px;
+  }
+
+  .contact-row {
+    flex-direction: column;
+  }
+
+  .contact-row input {
+    width: 100%;
+  }
+} var(--accent-2);
+  margin: 25px 0 15px;
+}
+
+.contact-right p {
+  margin: 0;
+  font-family: 'Dongle', sans-serif;
+  font-size: 30px;
+  line-height: 1;
+}
+
+/* =========================================
+   CONTACT RESPONSIVE DESIGN
+   ========================================= */
+
+@media (max-width: 768px) {
+  .contact-section {
+    padding: 50px 6%;
+  }
+
+  .contact-container {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+
+  .contact-left h2 {
+    font-size: 70px;
+  }
+
+  .contact-right {
+    margin-top: 0;
+    padding-left: 25px;
+  }
+
+  .contact-right h3 {
+    font-size: 38px;
+  }
+
+  .contact-row {
+    flex-direction: column;
+  }
+
+  .contact-row input {
+    width: 100%;
+    flex: auto;
   }
 }
