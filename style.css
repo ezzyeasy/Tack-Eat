@@ -439,7 +439,7 @@ button {
   box-shadow: none;
 }
 
-/* LEFT PANEL: Burger Visual */
+/* LEFT PANEL: Food Video */
 .auth-left-panel {
   position: relative;
   display: flex;
@@ -480,27 +480,26 @@ button {
   width: auto;
 }
 
-.auth-burger-showcase {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.auth-video-frame {
   flex: 1;
   min-height: 0;
-  padding: 12px 0;
+  padding-block: 12px;
 }
 
-.auth-burger-img {
-  width: auto;
-  max-width: min(85%, 360px);
-  max-height: 56vh;
-  object-fit: contain;
-  filter: drop-shadow(0 28px 40px rgb(0 0 0 / 55%));
-  transform: rotate(-8deg);
-  transition: transform 350ms ease;
+.auth-left-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
 }
 
-.auth-left-panel:hover .auth-burger-img {
-  transform: rotate(-3deg) scale(1.03);
+@media (prefers-reduced-motion: reduce) {
+  .auth-left-video {
+    display: none;
+  }
 }
 
 .auth-left-caption h2 {
@@ -809,8 +808,13 @@ button {
     text-align: center;
   }
 
-  .auth-burger-img {
-    max-width: 170px;
+  /* Preserve the artwork's contribution to the stacked panel height. */
+  .auth-video-frame::before {
+    content: "";
+    display: block;
+    width: 170px;
+    aspect-ratio: 960 / 1637;
+    max-height: 56vh;
   }
 
   .auth-right-panel {
