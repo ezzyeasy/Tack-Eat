@@ -89,6 +89,8 @@ button {
   border-radius: 1em;
   background: transparent;
   white-space: nowrap;
+  text-decoration: none;
+  color: var(--accent-2);
   transition: background-color 150ms ease, transform 150ms ease;
 }
 
