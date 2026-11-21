@@ -561,6 +561,174 @@ function initAuthPage() {
   });
 }
 
-// Initialize both pages
+// ============================================================================
+// 5. CONTACT FORM VALIDATION, RESET & NOTIFICATION (index.html)
+// ============================================================================
+function initContactForm() {
+  const contactForm = document.getElementById("contact-form");
+  if (!contactForm) return;
+
+  const nameInput = document.getElementById("contact-name");
+  const emailInput = document.getElementById("contact-email");
+  const subjectInput = document.getElementById("contact-subject");
+  const messageInput = document.getElementById("contact-message");
+  const feedbackBox = document.getElementById("contact-feedback");
+
+  const fields = [nameInput, emailInput, subjectInput, messageInput];
+  let feedbackTimeout = null;
+
+  function showContactFeedback(type, text) {
+    if (!feedbackBox) return;
+    if (feedbackTimeout) clearTimeout(feedbackTimeout);
+
+    if (!text) {
+      feedbackBox.className = "contact-feedback hidden";
+      feedbackBox.textContent = "";
+      return;
+    }
+
+    feedbackBox.className = `contact-feedback feedback-${type}`;
+    feedbackBox.textContent = text;
+
+    if (type === "success") {
+      feedbackTimeout = setTimeout(() => {
+        feedbackBox.className = "contact-feedback hidden";
+      }, 5000);
+    }
+  }
+
+  // Clear invalid outline when the user starts typing in a field
+  for (const field of fields) {
+    field?.addEventListener("input", () => {
+      field.classList.remove("input-invalid");
+      if (feedbackBox && feedbackBox.classList.contains("feedback-error")) {
+        showContactFeedback(null, "");
+      }
+    });
+  }
+
+  contactForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const subject = subjectInput.value.trim();
+    const messageTxt = messageInput.value.trim();
+
+    // Reset invalid states
+    for (const field of fields) {
+      field.classList.remove("input-invalid");
+    }
+
+    // 1. Check that all fields are filled
+    const emptyFields = [];
+    if (!name) {
+      nameInput.classList.add("input-invalid");
+      emptyFields.push("Name");
+    }
+    if (!email) {
+      emailInput.classList.add("input-invalid");
+      emptyFields.push("Email");
+    }
+    if (!subject) {
+      subjectInput.classList.add("input-invalid");
+      emptyFields.push("Subject");
+    }
+    if (!messageTxt) {
+      messageInput.classList.add("input-invalid");
+      emptyFields.push("Message");
+    }
+
+    if (emptyFields.length > 0) {
+      showContactFeedback(
+        "error",
+        `Please fill in all required fields (${emptyFields.join(", ")}).`
+      );
+      return;
+    }
+
+    // 2. Validate email format
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      emailInput.classList.add("input-invalid");
+      showContactFeedback("error", "Please enter a valid email address (e.g., name@example.com).");
+      return;
+    }
+
+    // 3. Reset the form and show confirmation notification
+    contactForm.reset();
+    showContactFeedback(
+      "success",
+      `Thank you, ${name}! Your message has been sent successfully.`
+    );
+
+    // Also show the site's modal dialog notification if available
+    if (dialog && title && message) {
+      title.textContent = "Message Sent! 📌";
+      message.textContent = `Thanks for reaching out, ${name}! Your message regarding "${subject}" has been sent.`;
+      dialog.showModal();
+    }
+  });
+}
+
+// Initialize all page modules
 syncNavbarAuthState();
 initAuthPage();
+initContactForm();
+initCartUI();
+
+// ============================================================================
+// 6. FLOATING CART BUTTON & RIGHT CART DRAWER UI (Visual Only)
+// ============================================================================
+function initCartUI() {
+  const floatingCartBtn = document.getElementById("floating-cart-btn");
+  const cartDrawer = document.getElementById("cart-drawer");
+  const cartBackdrop = document.getElementById("cart-backdrop");
+  const cartCloseBtn = document.getElementById("cart-close-btn");
+  const cartOpenTriggers = document.querySelectorAll("[data-cart-open]");
+
+  if (!cartDrawer || !cartBackdrop) return;
+
+  function openCartDrawer() {
+    cartDrawer.classList.add("is-open");
+    cartBackdrop.classList.add("is-open");
+    cartDrawer.setAttribute("aria-hidden", "false");
+  }
+
+  function closeCartDrawer() {
+    cartDrawer.classList.remove("is-open");
+    cartBackdrop.classList.remove("is-open");
+    cartDrawer.setAttribute("aria-hidden", "true");
+  }
+
+  // Open cart when clicking either the navbar cart button or the bottom-left floating button
+  for (const trigger of cartOpenTriggers) {
+    trigger.addEventListener("click", (e) => {
+      e.preventDefault();
+      openCartDrawer();
+    });
+  }
+
+  // Close cart when clicking the close button, the 50% dark backdrop, or pressing Escape
+  cartCloseBtn?.addEventListener("click", closeCartDrawer);
+  cartBackdrop.addEventListener("click", closeCartDrawer);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && cartDrawer.classList.contains("is-open")) {
+      closeCartDrawer();
+    }
+  });
+
+  // Show the bottom-left floating cart button when scrolling down
+  if (floatingCartBtn) {
+    function handleScroll() {
+      if (window.scrollY > 120) {
+        floatingCartBtn.classList.add("is-visible");
+      } else {
+        floatingCartBtn.classList.remove("is-visible");
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+  }
+}

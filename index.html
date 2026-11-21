@@ -28,9 +28,9 @@
       </div>
 
       <div class="nav-actions">
-        <a class="cart" href="#" aria-label="Cart" data-preview="cart">
+        <button class="cart nav-cart-trigger" type="button" aria-label="Open Cart" data-cart-open>
           <img class="icon cart-icon" src="icons/cart.svg" alt="" width="18" height="18">
-        </a>
+        </button>
         <a class="nav-button" href="#" data-preview="explore">Explore</a>
         <a class="nav-button" href="#" data-preview="nearby">What's Nearby</a>
         <a class="nav-button" href="#" data-preview="offers">Offers</a>
@@ -63,7 +63,95 @@
         </svg>
       </div>
     </section>
+
+    <!-- CONTACT US SECTION -->
+    <section class="contact-section" id="contact">
+
+      <div class="contact-container">
+
+        <!-- LEFT SIDE -->
+        <div class="contact-left">
+
+          <h1 class="contact-title">
+            Let's Tack<br>
+            About It!
+          </h1>
+
+          <form id="contact-form" class="contact-form" novalidate>
+
+            <div class="contact-row">
+              <input type="text" id="contact-name" name="name" placeholder="NAME" aria-label="Name" required>
+              <input type="email" id="contact-email" name="email" placeholder="EMAIL" aria-label="Email" required>
+            </div>
+
+            <input type="text" id="contact-subject" name="subject" placeholder="SUBJECT" aria-label="Subject" required>
+
+            <textarea id="contact-message" name="message" placeholder="MESSAGE" aria-label="Message" required></textarea>
+
+            <div id="contact-feedback" class="contact-feedback hidden" role="status" aria-live="polite"></div>
+
+            <button type="submit" class="contact-submit">
+              SEND IT !
+            </button>
+
+          </form>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="contact-right">
+
+          <h2>
+            Pin your place.<br>
+            Find your taste!
+          </h2>
+
+          <div class="contact-divider"></div>
+
+          <p>
+            Drop a message and let's<br>
+            make your Tack-Eat<br>
+            experience even better.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
   </main>
+
+  <!-- FLOATING BOTTOM-LEFT CART BUTTON (Appears on scroll) -->
+  <button id="floating-cart-btn" class="floating-cart-btn" type="button" aria-label="Open Cart" data-cart-open>
+    <img class="icon cart-icon" src="icons/cart.svg" alt="" width="22" height="22">
+  </button>
+
+  <!-- CART BACKDROP OVERLAY (50% Darker Background) -->
+  <div id="cart-backdrop" class="cart-backdrop" aria-hidden="true"></div>
+
+  <!-- FLOATING RIGHT CART DRAWER (35% Width) -->
+  <aside id="cart-drawer" class="cart-drawer" aria-label="Shopping Cart" aria-hidden="true">
+    <div class="cart-drawer-header">
+      <h2>Your Cart</h2>
+      <button id="cart-close-btn" class="cart-close-btn" type="button" aria-label="Close Cart">✕</button>
+    </div>
+
+    <div class="cart-drawer-body">
+      <div class="cart-empty-placeholder">
+        <img class="cart-placeholder-icon" src="icons/cart.svg" alt="" width="44" height="44">
+        <p class="cart-empty-title">Your cart is empty</p>
+        <p class="cart-empty-sub">Add some tasty bites from the menu to get started!</p>
+      </div>
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="cart-summary-row">
+        <span>Total</span>
+        <strong>RM 0.00</strong>
+      </div>
+      <button class="cart-checkout-btn" type="button">Checkout</button>
+    </div>
+  </aside>
 
   <dialog class="preview" aria-labelledby="preview-title" aria-describedby="preview-message">
     <h2 id="preview-title"></h2>
