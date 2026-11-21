@@ -1284,7 +1284,7 @@ button {
 
   .floating-cart-btn {
     bottom: 20px;
-    left: 20px;
+    right: 20px;
     width: 52px;
     height: 52px;
   }
