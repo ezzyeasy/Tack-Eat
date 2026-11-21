@@ -1,6 +1,6 @@
 @font-face {
   font-family: Fredoka;
-  src: url("fonts/Fredoka/Fredoka-VariableFont_wdth,wght.ttf") format("truetype");
+  src: url("Assets/fonts/Fredoka/Fredoka-VariableFont_wdth,wght.ttf") format("truetype");
   font-weight: 300 700;
   font-stretch: 75% 125%;
   font-display: swap;
@@ -775,31 +775,6 @@ button {
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
-}
-
-/* SQL Details Box */
-.auth-sql-details {
-  margin-top: 24px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.auth-sql-details summary {
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.auth-sql-details pre {
-  margin-top: 8px;
-  padding: 10px;
-  max-height: 170px;
-  overflow: auto;
-  background: #0f172a;
-  color: #e2e8f0;
-  border-radius: 4px;
-  font-size: 11px;
 }
 
 @media (max-width: 780px) {
