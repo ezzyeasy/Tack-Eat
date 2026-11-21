@@ -57,8 +57,8 @@ async function syncNavbarAuthState() {
   }
 
   const { isAdmin, username } = await checkUserRoleAndProfile(user);
-  navAuthLink.textContent = isAdmin ? `🛡️ Admin (${username})` : `Hi, ${username}`;
-  navAuthLink.href = "login.html";
+  navAuthLink.textContent = isAdmin ? `Admin (${username})` : `Hi, ${username}`;
+  navAuthLink.href = isAdmin ? "admin.html" : "login.html";
 }
 
 // ============================================================================
@@ -270,9 +270,10 @@ function initAuthPage() {
     const sessionWelcome = document.getElementById("session-welcome");
     const sessionEmail = document.getElementById("session-email");
     const adminPanelBox = document.getElementById("admin-panel-box");
+    const btnAdminDashboard = document.getElementById("btn-admin-dashboard");
 
     if (roleBadge) {
-      roleBadge.textContent = isAdmin ? "🛡️ Admin Account" : "Customer Account";
+      roleBadge.textContent = isAdmin ? "Admin Account" : "Customer Account";
       roleBadge.className = `role-badge ${isAdmin ? "role-admin" : "role-customer"}`;
     }
     if (sessionWelcome) {
@@ -283,6 +284,9 @@ function initAuthPage() {
     }
     if (adminPanelBox) {
       adminPanelBox.classList.toggle("hidden", !isAdmin);
+    }
+    if (btnAdminDashboard) {
+      btnAdminDashboard.classList.toggle("hidden", !isAdmin);
     }
 
     switchView("session");
@@ -356,13 +360,14 @@ function initAuthPage() {
       }
 
       const { isAdmin, username } = await checkUserRoleAndProfile(data.user);
+      if (isAdmin) {
+        showAlert("success", `Admin verified (${username}). Redirecting to Admin Dashboard...`);
+        window.location.href = "admin.html";
+        return;
+      }
+
       await renderSessionView(data.user);
-      showAlert(
-        "success",
-        isAdmin
-          ? `Signed in as Administrator (${username}).`
-          : `Welcome back, ${username}!`
-      );
+      showAlert("success", `Welcome back, ${username}!`);
     } catch (err) {
       showAlert("error", err.message || "Unable to sign in.");
     } finally {
@@ -453,6 +458,11 @@ function initAuthPage() {
         );
         formRegister.reset();
       } else if (data.user) {
+        const { isAdmin } = await checkUserRoleAndProfile(data.user);
+        if (isAdmin) {
+          window.location.href = "admin.html";
+          return;
+        }
         await renderSessionView(data.user);
         showAlert("success", `Account created! Welcome to Tack-Eat, ${username}.`);
       }
@@ -732,3 +742,30 @@ function initCartUI() {
     handleScroll();
   }
 }
+
+// ============================================================================
+// 7. ADMIN DASHBOARD HEADER & SIGN OUT (admin.html)
+// ============================================================================
+async function initAdminDashboard() {
+  const adminUserDisplay = document.getElementById("admin-user-display");
+  const adminLogoutBtn = document.getElementById("admin-logout-btn");
+
+  if (!adminUserDisplay && !adminLogoutBtn) return;
+
+  if (supabaseClient) {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user && adminUserDisplay) {
+      const { username } = await checkUserRoleAndProfile(user);
+      adminUserDisplay.textContent = `${username} (${user.email})`;
+    }
+  }
+
+  adminLogoutBtn?.addEventListener("click", async () => {
+    if (supabaseClient) {
+      await supabaseClient.auth.signOut();
+    }
+    window.location.href = "login.html";
+  });
+}
+
+initAdminDashboard();

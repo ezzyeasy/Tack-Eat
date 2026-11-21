@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tack-Eat | Admin Dashboard</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📌</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <!-- Supabase JS SDK v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
+</head>
+
+<body class="admin-page-body">
+  <!-- TOP ADMIN NAVBAR -->
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div class="admin-brand-group">
+        <a href="index.html" class="admin-logo" aria-label="Tack-Eat Home">
+          <img src="Assets/logo/Tack-Eat_Logo-White.svg" alt="Tack-Eat" width="150" height="19">
+        </a>
+        <span class="admin-pill-badge">Admin Console</span>
+      </div>
+
+      <div class="admin-header-actions">
+        <span id="admin-user-display" class="admin-user-label">admin@tack-eat.com</span>
+        <a href="index.html" class="admin-nav-btn">View Storefront ↗</a>
+        <button type="button" id="admin-logout-btn" class="admin-nav-btn admin-logout-btn">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <!-- Welcome & Quick Stats Row -->
+    <section class="admin-hero-bar">
+      <div>
+        <h1>Menu Management Dashboard</h1>
+        <p>Add new food items, update prices, and organize Tack-Eat menu categories.</p>
+      </div>
+      <div class="admin-stats-row">
+        <div class="admin-stat-card">
+          <span class="stat-label">Total Menu Items</span>
+          <strong class="stat-value">12</strong>
+        </div>
+        <div class="admin-stat-card">
+          <span class="stat-label">Active Categories</span>
+          <strong class="stat-value">4</strong>
+        </div>
+        <div class="admin-stat-card">
+          <span class="stat-label">Store Status</span>
+          <strong class="stat-value stat-live">● Open</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Two-Column Admin Grid -->
+    <div class="admin-workspace-grid">
+      <!-- LEFT COLUMN: Add New Menu Item Form -->
+      <section class="admin-card">
+        <div class="admin-card-header">
+          <h2>+ Add New Menu Item</h2>
+          <span class="admin-card-tag">CMS Form Preview</span>
+        </div>
+
+        <form class="admin-menu-form" onsubmit="return false;">
+          <div class="admin-field">
+            <label for="menu-item-name">Item Name</label>
+            <input type="text" id="menu-item-name" placeholder="e.g., Double Smash Cheese Burger">
+          </div>
+
+          <div class="admin-field-row">
+            <div class="admin-field">
+              <label for="menu-item-category">Category</label>
+              <select id="menu-item-category">
+                <option value="burgers">Burgers</option>
+                <option value="sides">Sides & Snacks</option>
+                <option value="drinks">Beverages</option>
+                <option value="desserts">Desserts</option>
+              </select>
+            </div>
+
+            <div class="admin-field">
+              <label for="menu-item-price">Price (RM)</label>
+              <input type="number" id="menu-item-price" placeholder="18.90" step="0.10" min="0">
+            </div>
+          </div>
+
+          <div class="admin-field-row">
+            <div class="admin-field">
+              <label for="menu-item-availability">Availability</label>
+              <select id="menu-item-availability">
+                <option value="available">Available (In Stock)</option>
+                <option value="sold_out">Sold Out</option>
+                <option value="seasonal">Seasonal Special</option>
+              </select>
+            </div>
+
+            <div class="admin-field">
+              <label for="menu-item-badge">Highlight Tag</label>
+              <input type="text" id="menu-item-badge" placeholder="e.g., Best Seller, Spicy">
+            </div>
+          </div>
+
+          <div class="admin-field">
+            <label for="menu-item-image">Food Image Upload / URL</label>
+            <div class="admin-upload-box">
+              <input type="url" id="menu-item-image"
+                placeholder="Paste image URL or path (e.g., Assets/images/burger-hero.png)">
+            </div>
+          </div>
+
+          <div class="admin-field">
+            <label for="menu-item-desc">Description</label>
+            <textarea id="menu-item-desc" rows="3"
+              placeholder="Describe the ingredients, portion size, and flavor notes..."></textarea>
+          </div>
+
+          <div class="admin-form-actions">
+            <button type="reset" class="admin-btn-secondary">Clear Form</button>
+            <button type="button" class="admin-btn-primary">Add Item to Menu</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- RIGHT COLUMN: Current Menu Items Preview List -->
+      <section class="admin-card">
+        <div class="admin-card-header">
+          <h2>Current Menu Items</h2>
+          <div class="admin-filter-pills">
+            <button type="button" class="filter-pill active">All</button>
+            <button type="button" class="filter-pill">Burgers</button>
+            <button type="button" class="filter-pill">Sides</button>
+            <button type="button" class="filter-pill">Drinks</button>
+          </div>
+        </div>
+
+        <div class="admin-items-list">
+          <!-- Sample Item 1 -->
+          <article class="admin-menu-row">
+            <img src="Assets/images/burger-hero.png" alt="Tack-Eat Signature Burger" class="admin-item-thumb">
+            <div class="admin-item-details">
+              <div class="admin-item-top">
+                <h3>Tack-Eat Signature Burger</h3>
+                <span class="admin-price-badge">RM 19.90</span>
+              </div>
+              <p>Grilled beef patty, cheddar cheese, red onions, tomato, and house special sauce.</p>
+              <div class="admin-item-meta">
+                <span class="meta-tag">Burgers</span>
+                <span class="meta-status status-instock">● Available</span>
+              </div>
+            </div>
+            <div class="admin-item-actions">
+              <button type="button" class="admin-action-btn">Edit</button>
+              <button type="button" class="admin-action-btn btn-danger">Delete</button>
+            </div>
+          </article>
+
+          <!-- Sample Item 2 -->
+          <article class="admin-menu-row">
+            <img src="Assets/images/burger2.jpg" alt="Smoky Double Beef Burger" class="admin-item-thumb">
+            <div class="admin-item-details">
+              <div class="admin-item-top">
+                <h3>Smoky Double Beef Stack</h3>
+                <span class="admin-price-badge">RM 24.50</span>
+              </div>
+              <p>Double flame-grilled patties with crispy lettuce, melted cheddar, and smoky BBQ glaze.</p>
+              <div class="admin-item-meta">
+                <span class="meta-tag">Burgers</span>
+                <span class="meta-status status-instock">● Available</span>
+              </div>
+            </div>
+            <div class="admin-item-actions">
+              <button type="button" class="admin-action-btn">Edit</button>
+              <button type="button" class="admin-action-btn btn-danger">Delete</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+
+</html>

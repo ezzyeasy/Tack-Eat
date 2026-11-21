@@ -28,6 +28,10 @@ DESCRIPTION OF FEATURES:
     a. Responsive Layout & Modern Styling: Mobile-friendly Flexbox/Grid architecture using custom CSS variables (`:root`) for consistent brand theming.
     b. Optimized Assets & Typography: Lightweight scalable vector graphics (SVG logos/icons) and preconnected Google Fonts (`Fredoka` & `Dongle`) for fast rendering and smooth micro-interactions.
 
+6. Admin Dashboard
+    a. Dynamic Admin Dashboard: Allows admins to view and manage menu items, categories, and store settings.
+    b. Role-Based Access Control: Ensures that only authenticated users with admin privileges can access and manage the menu.
+
 DIVISION OF TASKS:
 1. Ezzy - Function, Compiling
 2. Alipe - Navbar, Hero Section 
