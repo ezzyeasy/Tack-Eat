@@ -39,11 +39,11 @@ addEventListener('resize', onScroll);
 update();
 addEventListener('load', update);   // re-check once fonts/images have loaded
 
-/* 2. Live Kuala Lumpur time (optional; delete if you want static text) */
+/* 2. Live Seoul (KST) time (optional; delete if you want static text) */
 function tick() {
   const t = new Date().toLocaleTimeString('en-GB', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuala_Lumpur'
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul', hour12: false
   });
-  document.getElementById('localTime').textContent = `${t} (SGT +8)`;
+  document.getElementById('localTime').textContent = `${t} (GMT +9)`;
 }
 tick(); setInterval(tick, 30000);
