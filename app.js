@@ -1884,3 +1884,70 @@ async function initFoodSection() {
 }
 
 initFoodSection();
+
+// ============================================================================
+// 9. FOOTER ANIMATION & LIVE CLOCK (Merged from NATASHA/footer section/script.js)
+// ============================================================================
+function initFooterSection() {
+  const footer = document.getElementById('footer');
+  const brandWrap = document.getElementById('brandWrap');
+  const cols = document.getElementById('cols');
+  const localTimeEl = document.getElementById('localTime');
+
+  if (!footer || !brandWrap || !cols) return;
+
+  const cover = footer.previousElementSibling;
+  if (!cover) return;
+
+  function revealed(el) {
+    const r = el.getBoundingClientRect();
+    const coverRect = cover.getBoundingClientRect();
+    if (coverRect.bottom >= window.innerHeight) return 0;
+    const coverEdge = Math.max(coverRect.bottom, 0);
+    const visible = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, coverEdge);
+    return r.height > 0 ? visible / r.height : 0;
+  }
+
+  function update() {
+    const nearBottom = cover.getBoundingClientRect().bottom <= window.innerHeight + 40;
+    footer.classList.toggle('is-pinned', nearBottom && footer.offsetHeight <= window.innerHeight);
+
+    const b = revealed(brandWrap);
+    if (b >= 0.25) brandWrap.classList.add('is-in');
+    else if (b <= 0) brandWrap.classList.remove('is-in');
+
+    const c = revealed(cols);
+    if (c >= 0.25) footer.classList.add('is-in');
+    else if (c <= 0) footer.classList.remove('is-in');
+  }
+
+  let queued = false;
+  function onScroll() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      update();
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  update();
+  window.addEventListener('load', update);
+
+  if (localTimeEl) {
+    function tick() {
+      const t = new Date().toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Kuala_Lumpur',
+      });
+      localTimeEl.textContent = `${t} (SGT +8)`;
+    }
+    tick();
+    setInterval(tick, 30000);
+  }
+}
+
+initFooterSection();
