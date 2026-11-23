@@ -16,11 +16,10 @@ const byId = new Map(restaurants.map(restaurant => [restaurant.id, restaurant]))
 const offersById = new Map(offers.map(offer => [offer.id, offer]));
 const asset = name => `food-assets/${name}`;
 const restaurantImage = restaurant => asset(`${restaurant.id}.webp`);
-const money = cents => `RM ${(cents / 100).toFixed(2)}`;
 const maxQuantity = 20;
 const maxNoteLength = 120;
 const storageKey = 'tack-eat.food.v1';
-const portions = { Regular: 0, Large: 400 };
+const portions = { Regular: 0, Large: 3000 };
 const restaurantSorts = {
   fastest: (a, b) => a.minutes - b.minutes,
   distance: (a, b) => a.distance - b.distance,
@@ -116,7 +115,9 @@ function renderBrowseControls() {
     <button type="button" class="offer-card ${offer.color ?? ''}" data-action="offer" data-offer="${offer.id}" aria-haspopup="dialog">
       <span class="offer-shadow" aria-hidden="true"></span>
       <img class="offer-art" src="${asset(offer.image)}" alt="">
-      <span class="offer-brand" aria-hidden="true"></span>
+      <span class="offer-brand" aria-hidden="true">
+        <img src="${offer.color === 'red' ? '../Assets/logo/Tack-Eat_Logo-Orange.svg' : asset('offer-logo-green.svg')}" alt="" width="592" height="75">
+      </span>
       <span class="offer-title">${offer.title}</span>
       <span class="offer-copy">${offer.subtitle}</span>
       <span class="offer-code"><span>code</span><span>${offer.code}</span></span>
@@ -148,8 +149,8 @@ function restaurantCard(restaurant, showDistance) {
   const freeDelivery = !pickingUp && restaurant.freeDelivery;
   const fee = freeDelivery
     ? `<img class="delivery-fee-icon" src="${asset('delivery-scooter.png')}" alt="" width="19" height="15">
-      <del>${money(restaurant.fee).replace(' ', '')}</del><span class="free-delivery-label">Free Delivery</span>`
-    : pickingUp ? 'Free pick-up' : money(restaurant.fee);
+      <del>${formatWon(restaurant.fee)}</del><span class="free-delivery-label">Free Delivery</span>`
+    : pickingUp ? 'Free pick-up' : formatWon(restaurant.fee);
   return `
     <button type="button" class="restaurant-card" data-action="restaurant" data-restaurant="${restaurant.id}" aria-haspopup="dialog">
       <img src="${restaurantImage(restaurant)}" alt="" width="349" height="207" loading="lazy">
@@ -249,7 +250,7 @@ function showRestaurant(restaurantId) {
           <button type="button" data-action="dish" data-restaurant="${restaurant.id}" data-dish="${dish.id}" ${restaurant.open ? '' : 'disabled'}>
             <h3>${dish.name}</h3><p>${dish.description}</p>
           </button>
-          <strong class="dish-price">${money(dish.price)}</strong>
+          <strong class="dish-price">${formatWon(dish.price)}</strong>
         </li>`).join('')}
     </ul>
     <img class="dialog-photo" src="${restaurantImage(restaurant)}" alt="" width="349" height="207">`);
@@ -262,13 +263,13 @@ function showDish(restaurantId, dishId) {
     <p>${dish.description}</p>
     <form class="dish-form" id="dish-form">
       <div class="dish-options">
-        <label>Portion <select name="portion"><option>Regular</option><option value="Large">Large (+${money(portions.Large)})</option></select></label>
+        <label>Portion <select name="portion"><option>Regular</option><option value="Large">Large (+${formatWon(portions.Large)})</option></select></label>
         <label>Quantity <input name="quantity" type="number" min="1" max="${maxQuantity}" step="1" value="1" required></label>
       </div>
       <label>Special instructions <textarea name="notes" rows="2" maxlength="${maxNoteLength}" placeholder="Optional"></textarea></label>
       <div class="dialog-actions">
         <button class="secondary-button" type="button" data-action="restaurant" data-restaurant="${restaurantId}">Back to menu</button>
-        <button class="primary-button" id="add-to-cart" type="submit">Add to cart · ${money(dish.price)}</button>
+        <button class="primary-button" id="add-to-cart" type="submit">Add to cart · ${formatWon(dish.price)}</button>
       </div>
       <p id="dish-status" class="order-note" role="status"></p>
     </form>`);
@@ -321,8 +322,8 @@ function cartTotals() {
   const voucherSubtotal = subtotal - buyOneGetOne;
   const voucherRules = {
     'first-order': () => cart.placedOrder ? 0 : Math.round(voucherSubtotal * .6),
-    chicken: () => cart.lines.some(line => line.dishId === 'crispy-chicken-combo') ? 1000 : 0,
-    'over-forty': () => voucherSubtotal > 4000 ? 1000 : 0,
+    chicken: () => cart.lines.some(line => line.dishId === 'crispy-chicken-combo') ? fixedVoucherDiscount : 0,
+    'over-forty': () => voucherSubtotal > minimumVoucherSubtotal ? fixedVoucherDiscount : 0,
   };
   const voucher = Math.min(voucherSubtotal, voucherRules[cart.promotion]?.() ?? 0);
   return { subtotal, delivery, buyOneGetOne, voucher, total: subtotal + delivery - buyOneGetOne - voucher };
@@ -331,11 +332,11 @@ function cartTotals() {
 function totalsMarkup(totals) {
   return `
     <dl class="order-totals">
-      <div><dt>Subtotal</dt><dd>${money(totals.subtotal)}</dd></div>
-      <div><dt>${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'}</dt><dd>${totals.delivery ? money(totals.delivery) : 'Free'}</dd></div>
-      ${totals.buyOneGetOne ? `<div><dt>Buy 1 Free 1</dt><dd>−${money(totals.buyOneGetOne)}</dd></div>` : ''}
-      ${totals.voucher ? `<div><dt>CRUNCH</dt><dd>−${money(totals.voucher)}</dd></div>` : ''}
-      <div class="grand-total"><dt>Total</dt><dd>${money(totals.total)}</dd></div>
+      <div><dt>Subtotal</dt><dd>${formatWon(totals.subtotal)}</dd></div>
+      <div><dt>${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'}</dt><dd>${totals.delivery ? formatWon(totals.delivery) : 'Free'}</dd></div>
+      ${totals.buyOneGetOne ? `<div><dt>Buy 1 Free 1</dt><dd>−${formatWon(totals.buyOneGetOne)}</dd></div>` : ''}
+      ${totals.voucher ? `<div><dt>CRUNCH</dt><dd>−${formatWon(totals.voucher)}</dd></div>` : ''}
+      <div class="grand-total"><dt>Total</dt><dd>${formatWon(totals.total)}</dd></div>
     </dl>`;
 }
 
@@ -355,7 +356,7 @@ function cartLines(editable) {
             <button class="remove-line" type="button" data-action="remove" data-line="${index}" aria-label="Remove ${dish.name}">Remove</button>
           </div>` : ''}
         </div>
-        <strong>${money(linePrice(line) * line.quantity)}</strong>
+        <strong>${formatWon(linePrice(line) * line.quantity)}</strong>
       </li>`;
   }).join('')}</ul>`;
 }
@@ -409,7 +410,7 @@ function confirmOrder() {
   cart.placedOrder = true;
   saveCart();
   showDialog('confirmed', 'Demo order complete', `
-    <p>Order total · ${money(total)}</p>
+    <p>Order total · ${formatWon(total)}</p>
     <div class="dialog-actions"><button class="primary-button" type="button" data-action="close">Back to restaurants</button></div>`);
 }
 
@@ -503,7 +504,7 @@ dialog.addEventListener('input', event => {
   const values = new FormData(event.target.form);
   const line = { ...currentDish, portion: values.get('portion') };
   const quantity = Number(values.get('quantity'));
-  document.querySelector('#add-to-cart').textContent = `Add to cart · ${money(linePrice(line) * (quantity || 1))}`;
+  document.querySelector('#add-to-cart').textContent = `Add to cart · ${formatWon(linePrice(line) * (quantity || 1))}`;
 });
 
 search.addEventListener('input', renderRestaurants);

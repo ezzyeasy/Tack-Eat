@@ -283,12 +283,9 @@ img { display: block; max-width: 100%; }
   background: var(--cream);
 }
 
-.offer-brand::before {
-  content: '';
+.offer-brand img {
   width: 80%;
-  aspect-ratio: 233 / 29;
-  background: var(--coupon-background);
-  mask: url('../Assets/logo/Tack-Eat_Logo-White.svg') center / contain no-repeat;
+  height: auto;
 }
 
 .offer-title {
@@ -297,6 +294,11 @@ img { display: block; max-width: 100%; }
   font-weight: 700;
   line-height: .9;
   letter-spacing: -.035em;
+}
+
+.offer-card[data-offer='over-forty'] .offer-title {
+  transform: scaleX(.88);
+  transform-origin: left center;
 }
 
 .offer-copy {
