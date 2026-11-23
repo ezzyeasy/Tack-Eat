@@ -146,7 +146,7 @@ function restaurantCard(restaurant, showDistance) {
   const distance = showDistance ? ` · ${restaurant.distance.toFixed(1)} km` : '';
   const pickingUp = cart.mode === 'pickup';
   const timing = pickingUp ? 'Pick-up from' : 'From';
-  const freeDelivery = !pickingUp && restaurant.freeDelivery;
+  const freeDelivery = restaurant.freeDelivery;
   const feeAmount = formatWon(restaurant.fee);
   const fee = freeDelivery
     ? `<del>${feeAmount}</del><span class="free-delivery-label">Free Delivery</span>`
@@ -159,11 +159,11 @@ function restaurantCard(restaurant, showDistance) {
       <span class="restaurant-title">
         <span class="restaurant-name">${escapeText(restaurant.name)}</span>
         <span class="rating" aria-label="${score} stars from ${restaurant.reviews} reviews">
-          <span class="star" aria-hidden="true">★</span> ${score} <span class="review-count">(${restaurant.reviews})</span>
+          <span class="star" aria-hidden="true">✭</span> ${score} <span class="review-count">(${restaurant.reviews})</span>
         </span>
       </span>
       <span class="restaurant-meta"><span>${restaurant.open ? `${timing} ${restaurant.minutes} min${distance}` : 'Closed'}</span><span>${restaurant.price}</span><span>${restaurant.cuisine}${meal}</span><span>${restaurant.dietary}</span></span>
-      <span class="restaurant-fee${freeDelivery ? ' free-delivery' : ''}">${pickingUp ? 'Free pick-up' : deliveryFee}</span>
+      <span class="restaurant-fee${freeDelivery ? ' free-delivery' : ''}" title="Delivery fee">${deliveryFee}</span>
     </button>`;
 }
 

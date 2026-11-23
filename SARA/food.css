@@ -360,14 +360,26 @@ img { display: block; max-width: 100%; }
 .results-status:empty { display: none; }
 .results-status { margin: -10px 0 15px; color: var(--muted); }
 .restaurant-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(22px, 2.4vw, 46px) clamp(15px, 1.85vw, 36px); }
-.restaurant-card { min-width: 0; color: #000; text-align: left; border-radius: var(--radius); }
-.restaurant-card > img { width: 100%; aspect-ratio: 349 / 207; border-radius: var(--radius); object-fit: cover; background: #efdec8; }
+.restaurant-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: #000;
+  text-align: left;
+  border-radius: var(--radius);
+}
+.restaurant-card > img { width: 100%; height: auto; aspect-ratio: 349 / 207; border-radius: var(--radius); object-fit: cover; background: #efdec8; }
 .restaurant-card:hover .restaurant-name { text-decoration: underline; text-underline-offset: 3px; }
 .restaurant-title { display: flex; align-items: baseline; justify-content: space-between; gap: 5px 8px; margin: 3px 0 1px; }
-.restaurant-name { font-size: clamp(26px, 1.67vw, 32px); font-weight: 700; line-height: .94; }
+.restaurant-name { font-size: clamp(26px, 1.67vw, 32px); font-weight: 700; line-height: .94; letter-spacing: -.035em; }
 .rating { flex: 0 0 auto; white-space: nowrap; }
-.rating .star { color: var(--red); }
-.restaurant-meta, .restaurant-fee, .rating { font-size: clamp(21px, 1.25vw, 24px); line-height: .95; }
+.rating .star {
+  color: var(--gold);
+  font-family: Inter, 'Segoe UI Symbol', sans-serif;
+  letter-spacing: 0;
+  -webkit-text-stroke: .65px var(--red);
+}
+.restaurant-meta, .restaurant-fee, .rating { font-size: clamp(21px, 1.25vw, 24px); line-height: .95; letter-spacing: -.035em; }
 .restaurant-meta, .restaurant-fee { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin-top: 4px; }
 .restaurant-meta, .restaurant-fee, .rating .review-count { color: #7d7575; }
 .restaurant-card:is(
@@ -376,7 +388,6 @@ img { display: block; max-width: 100%; }
   [data-restaurant='texas-meat']
 ) .review-count { color: inherit; }
 .restaurant-fee { column-gap: 4px; }
-.restaurant-fee.free-delivery { letter-spacing: -.035em; }
 .delivery-fee-icon { flex: 0 0 auto; margin-right: 1px; }
 .free-delivery-label { color: var(--red); }
 .no-results { padding: 28px 20px; border: 1px dashed var(--line); border-radius: var(--radius); text-align: center; }
