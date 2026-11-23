@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tack-Eat!</title>
+
+  <!-- Google Font: Dongle -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dongle:wght@300;400;700&display=swap" rel="stylesheet" />
+
+  <!-- Your styles -->
+  <link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+  <!-- ================= INTRO ================= -->
+  <section class="intro">
+
+    <!-- Your logo (Tack-Logo.svg), pasted in so it can be coloured red.
+         The file itself is cream (#FFEFCD), which would vanish on this background.
+         Change the colour with "fill" below. -->
+    <svg class="intro__logo" viewBox="0 0 461.63 426.6" fill="#EA4426" role="img" aria-label="Tack-Eat logo"
+         xmlns="http://www.w3.org/2000/svg">
+      <path d="M213.84,39.36c84.63,14.61,172.55,66,247.64,117.55,1.72-38.6-11.82-76.17-38.3-104.31-11.73-12.48-24.63-22.71-39.7-30.98-18.47-10.15-38.3-16.89-59.06-20-7.03-1.05-14.13-1.49-21.24-1.53L284.53,0c-14.23-.07-27.74,2.74-41.65,5.65-28.57,5.99-57.46,16.21-84.29,29.79C176.1,34.77,194.4,36,213.84,39.36Z"/>
+      <path d="M398.06,299.83s0,0,0,0c19.49-22.07,35.88-46.76,47.18-73.62-1.15-.74-2.29-1.51-3.43-2.31-9.94-6.92-21-15.12-33.32-24.43-52.99-38.36-119.25-93.41-186.69-103.34,0,0,0,0,0,0-29.67,54.65-52.46,112.48-75.29,170.24-18.53,46.88-40.8,94.94-48.85,145.07-.26,1.75-.57,3.27-.92,4.63,17.48,6.63,36.4,10.28,55.85,10.51,55.91.69,107.89-19.33,152.06-49.17l6.22-4.56s0,0,0,0c34.43-6.62,63.98,5.15,83.76,17.23,6.47,3.96,14.52-1.99,12.39-9.27C397.26,347.52,397.87,306.97,398.06,299.83Z"/>
+      <path d="M145.12,95.35s0,0,0,0c-28.84-3.23-56.06,5.09-81.61,18.31-2.39,3.13-4.51,6.06-6.19,8.62q-2.1,3.19-4.31,6.31c-17.15,24.18-30.97,50.71-40.28,77.35-4.48,12.81-8.8,25.27-10.23,38.68l-1.55,14.47c-1.49,13.97-1.31,28.11,1.13,41.94,2.35,13.3,6.47,26.29,12.29,38.84,6.96,14.99,16.17,28.12,27.81,40.37.51.53,1.05,1.03,1.57,1.56C42.54,285.9,104.09,176.77,145.12,95.35Z"/>
+    </svg>
+
+    <!-- Hero photo (shown as a square; the top and bottom of tall photos get cropped) -->
+    <img class="intro__image" src="chad-montano-MqT0asuoIcU-unsplash.jpg" alt="Sliced chicken and pineapple pizza on a wooden board" />
+
+    <p class="intro__text">
+      We're ready to bring you food you love today! All kinds of food available to your nearest
+      location-asian, chinese, desserts you name it, Tack-Eat has it ;)
+    </p>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer" id="footer">
+
+      <div class="footer__brand" id="brandWrap">
+        <!-- 🔁 Your logo (Tack-Eat_Logo-Orange.svg), split into one <path> per letter
+             so each letter can slide up on its own. To swap in a new logo, keep one
+             <path class="char" style="--i:N"> per letter, numbered left to right. -->
+        <svg class="footer__logo" viewBox="118 238 596 82" role="img" aria-label="Tack-Eat!"
+             xmlns="http://www.w3.org/2000/svg" fill="#EE3F24" fill-rule="evenodd">
+          <!-- T -->
+          <path class="char" style="--i:0" d="M167.45,313.05c0,2.14-4.15,3.66-5.74,3.62s-4.94-1.32-6.03-2.92l-.13-56.35-32.04-.23c-1.94-.01-3.56-3.64-3.55-5.23s1.49-5.48,3.41-5.48l75.99-.02c2.03,0,3.53,3.86,3.55,5.5s-1.64,5.25-3.71,5.26l-31.62.19-.13,55.66Z"/>
+          <!-- a -->
+          <path class="char" style="--i:1" d="M265.42,271.85l-.22,41.49c-.01,2.56-5.69,3.51-7.74,2.79-2.54-.89-4.04-3.33-3.54-6.78-3.6,2.65-7.85,5.16-12.63,6-18.14,3.19-38.95-.62-42.87-17.72-2.11-9.2.45-18.44,8.04-24.07,11.45-8.49,34.95-8.67,46.73-.03.61-2.09,1.11-4.07,1.89-5.02s3.65-1.26,5.38-1.35c2.33-.13,4.98,1.88,4.97,4.68ZM252.22,291.89c.36-13.64-19.35-17.14-33.46-12.16-5.94,2.1-9.06,7.28-8.66,13.19.34,5.05,4.02,9.54,9.77,11.19,13.65,3.91,31.98,1.44,32.35-12.22Z"/>
+          <!-- c -->
+          <path class="char" style="--i:2" d="M292.47,301.89c12.9,6.26,27.52,4.12,38.92-3.29,3.86-.07,8.24,5.99,5.58,9.48-7.32,9.62-33.1,10.87-48.05,4.93-9.59-3.81-15-12.4-14.78-22.05.51-22.37,30.44-28.42,53.07-21.34,4,1.25,8.46,4.13,10.1,7.9,1.35,3.1-3.81,8.66-6.7,7.01-18.79-10.77-42.41-7.11-44.16,5.59-.6,4.32,1.34,9.51,6.01,11.77Z"/>
+          <!-- k -->
+          <path class="char" style="--i:3" d="M403.17,305.27c1.92.81,2.86,4.71,2.25,6.36-.65,1.76-2.73,4.26-4.95,5.02l-41.86-18.02-.3,14.96c-.03,1.66-3.93,3.16-5.53,3.11s-4.85-1.4-6.04-3.02l.04-65.75c0-1.83,3.58-3.54,5.14-3.64,1.76-.11,6.44,1.23,6.45,3l.21,36.3,36.7-15.85c4.48.49,7.49,8.58,4.23,10.53l-30.24,12.73,33.88,14.24Z"/>
+          <!-- - -->
+          <path class="char" style="--i:4" d="M461.13,295.04l-49.37-.03c-1.56,0-3.22-3.58-3.26-5.08s1.47-5.35,3-5.34l49.42.07c2.92,1.8,3.12,7.62.2,10.38Z"/>
+          <!-- E -->
+          <path class="char" style="--i:5" d="M482.43,286.35l-.09,17.96,66.74.12c3.44,2.36,3.51,9.76-.22,11.87l-74.37.14c-2.4,0-4.34-2.75-4.34-4.94v-60.14c.01-2.71,2.42-4.96,5.26-4.95l72.72.11c2.03,0,3.69,3.96,3.57,5.56-.13,1.76-1.07,4.64-2.66,6.43l-66.67.04-.02,16.85,55.76.26c3.51.46,3.46,10.08.01,10.4l-55.7.28Z"/>
+          <!-- a -->
+          <path class="char" style="--i:6" d="M626.01,312.69c-.8,3.07-4.58,4.05-6.91,3.61-3.24-.61-4.91-3.22-4.85-6.78-2.34,1.78-5.27,3.84-8.16,4.68-18.9,5.51-43.4,1.36-47.15-17.13-1.88-9.27.85-18.22,8.34-23.68,11.38-8.29,35.27-8.58,46.78.39l1.23-4.89c.31-1.22,3.73-1.88,4.98-1.67l3.99.68c1.01.17,1.5,2.65,1.76,3.84v40.95ZM604.02,303.76c6.15-2.11,9.04-7.36,8.89-12.58-.38-13.18-19.78-16.21-33.27-11.54-6.02,2.08-9.3,7.35-8.91,13.02.9,13.06,20.23,15.58,33.29,11.11Z"/>
+          <!-- t -->
+          <path class="char" style="--i:7" d="M683.91,305.8c3.33.55,3.18,9.21-.13,9.92-14.55,3.11-33.75-6.03-33.88-14.61l-.31-21.32-14-.63c-2.36-1.74-2.32-8.65.02-10.45l13.94-.53.77-14.93c.2-3.99,10.53-3.67,10.69.08l.61,14.94,24.15-.08c4.02-.01,4.1,10.71.38,10.8l-24.51.56.13,21.11c7,4.27,13.75,3.75,22.14,5.15Z"/>
+          <!-- ! -->
+          <path class="char" style="--i:8" d="M708.71,314.15c-2.56,2.91-7.98,2.53-10.22.09-1.8-1.96-1.63-7.42.28-9.25,2.45-2.35,7.71-2.3,9.89.17,1.43,1.61,1.55,7.29.05,9Z M708.96,292.55c-2.19,2.79-7.6,2.72-10.85.62v-44.5c3.16-2.4,7.36-2.51,10.85-.25v44.13Z"/>
+        </svg>
+      </div>
+
+      <div class="footer__cols" id="cols">
+        <div class="footer__col reveal" style="--d:.0">
+          <h4>Email</h4>
+          <a href="mailto:tackeat@gmail.com">tackeat@gmail.com</a>
+        </div>
+        <div class="footer__col reveal" style="--d:.1">
+          <h4>Call us</h4>
+          <a href="tel:+601079181802">(+60)01079181802</a>
+        </div>
+        <div class="footer__col reveal" style="--d:.2">
+          <h4>Tax number</h4>
+          <p>123-456-789</p>
+        </div>
+        <div class="footer__col reveal" style="--d:.3">
+          <h4>Shop</h4>
+          <a href="#">Delivery</a>
+          <a href="#">Shopping</a>
+          <a href="#">Business</a>
+          <a href="#">Profile</a>
+        </div>
+        <div class="footer__col reveal" style="--d:.4">
+          <h4>Company</h4>
+          <a href="about%20section/about.html">About</a>
+          <a href="#">FAQ</a>
+          <a href="#">Contact</a>
+        </div>
+        <div class="footer__col reveal" style="--d:.5">
+          <h4>Legal</h4>
+          <a href="#">Returns</a>
+          <a href="#">Help</a>
+        </div>
+        <div class="footer__col reveal" style="--d:.6">
+          <h4>Social</h4>
+          <a href="#">Instagram</a>
+          <a href="#">Facebook</a>
+          <a href="#">LinkedIn</a>
+          <a href="#">Twitter</a>
+        </div>
+      </div>
+
+      <div class="footer__bar reveal" style="--d:.7">
+        <span>Kuala Lumpur, Malaysia</span>
+        <span id="localTime">16:00 (SGT +8)</span>
+        <span class="center">Tack-Eat All Rights Reserved</span>
+        <a href="#">Terms of Service</a>
+        <a href="#">Privacy Policy</a>
+        <span>@2026</span>
+      </div>
+  </footer>
+
+  <script src="script.js"></script>
+
+</body>
+</html>

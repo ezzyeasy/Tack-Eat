@@ -1,0 +1,90 @@
+/* Tack-Eat! — About page styles */
+
+/* ============ COLOURS (edit here) ============ */
+:root {
+  --cream:  #FFF5E6;   /* page + text panel background */
+  --red:    #EA4426;   /* text */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: "Dongle", sans-serif;
+  background: var(--cream);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =====================================================
+   ABOUT SECTION
+   Left half: story text. Right half: photo with the logo on top.
+   ===================================================== */
+.about {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--cream);
+}
+
+/* Measured from the mockup (left panel 260 x 370 px, text 22.5px Dongle).
+   Everything scales with the panel's width, so it keeps the same look at any size. */
+.about__text {
+  container-type: inline-size;     /* lets the text size itself from this column's width */
+  aspect-ratio: 260 / 370;         /* same shape as the mockup panel */
+  display: flex;
+  overflow: hidden;                /* no sideways scrolling if the font fails to load */
+}
+.about__inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  color: var(--red);
+  font-size: 8.68cqw;              /* 22.5px when the panel is 260px wide */
+  line-height: 0.694;              /* 15.6px line spacing */
+  padding: 0.435em 0.37em 0.31em 0.44em;
+  white-space: nowrap;             /* keep the mockup's line breaks */
+}
+
+/* "Love," ends exactly where "Tack-Eat!" begins, on the line below */
+.about__signoff {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  margin-top: 0.694em;             /* one blank line after the story */
+}
+.about__signoff span:first-child { grid-column: 1; margin-right: -0.1em; }
+.about__signoff span:last-child  { grid-column: 2; grid-row: 2; }
+
+/* pushes the tagline to the bottom of the column */
+.about__tagline { margin-top: auto; }
+
+/* Right half — photo fills the column, logo sits in the middle */
+.about__media {
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+}
+.about__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.8);         /* lower exposure: 1 = original, smaller = darker */
+}
+.about__logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28%;                      /* logo size, as a share of the photo's width */
+  height: auto;
+  display: block;
+  /* soft shadow so the logo stays readable over the pancakes */
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.55));
+}
+
+/* Mobile: text on top, photo underneath */
+@media (max-width: 760px) {
+  .about { grid-template-columns: 1fr; }
+  .about__media { min-height: 100vw; }
+}
