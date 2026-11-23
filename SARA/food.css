@@ -136,11 +136,42 @@ img { display: block; max-width: 100%; }
 .price-options input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 3px; }
 .reset-filters { text-decoration: underline; text-underline-offset: 4px; color: var(--gold); }
 
-.sign-up-banner { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 16px; min-height: clamp(148px, 10.9vw, 209px); padding: 18px clamp(15px, 1.45vw, 28px); border-radius: var(--radius); background: #f9a11b54; color: var(--green); }
-.sign-up-banner h1 { font-size: clamp(42px, 3.65vw, 70px); line-height: .73; letter-spacing: -.022em; font-weight: 400; }
-.banner-link { display: inline-block; padding: 3px 14px; border-radius: 6px; background: var(--gold); color: var(--green); font-size: 32px; }
+.sign-up-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(17px, 1.3vw, 25px);
+  min-height: clamp(148px, 10.9vw, 209px);
+  padding: 18px clamp(16px, 1.25vw, 24px);
+  border-radius: var(--radius);
+  background: #f9a11b54;
+  color: var(--green);
+}
+
+.sign-up-banner h1 {
+  margin-inline-start: 4px;
+  font-size: clamp(42px, 3.65vw, 70px);
+  line-height: .63;
+  letter-spacing: -.035em;
+  font-weight: 400;
+}
+
+.banner-link {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 94px;
+  min-block-size: 36px;
+  padding-inline: 12px;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--cream);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -.035em;
+}
 .featured, .restaurants { margin-top: clamp(16px, 1.05vw, 20px); }
-.featured h2, .restaurants h2 { margin: 0 0 clamp(13px, 1.25vw, 24px); font-size: clamp(46px, 3.65vw, 70px); font-weight: 400; line-height: 1.13; letter-spacing: -.035em; }
+.featured h2, .restaurants h2 { margin: 0 0 clamp(13px, 1.25vw, 24px); color: var(--red); font-size: clamp(46px, 3.65vw, 70px); font-weight: 400; line-height: 1.13; letter-spacing: -.035em; }
 .carousel { position: relative; }
 .carousel-track { display: grid; grid-auto-flow: column; gap: clamp(12px, 1vw, 19px); padding: 4px; margin: -4px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; scroll-padding-inline: 4px; }
 .carousel-track::-webkit-scrollbar { display: none; }
@@ -156,7 +187,6 @@ img { display: block; max-width: 100%; }
 .carousel-arrow.previous { left: -18px; }
 .carousel-arrow.next { right: -18px; }
 .offers-section { margin-top: clamp(17px, 1.4vw, 26px); }
-.offers-section h2 { color: var(--red); }
 .offers-carousel .carousel-track {
   grid-auto-columns: max(228px, 28.65%);
   gap: clamp(10px, .9vw, 17px);
@@ -326,21 +356,27 @@ img { display: block; max-width: 100%; }
 .offer-terms { top: 91%; font-size: clamp(8px, 2.6cqw, 9px); line-height: 1; }
 
 .restaurants { margin-top: clamp(22px, 1.9vw, 36px); }
-.restaurants h2 { color: var(--brick); margin-bottom: 12px; }
+.restaurants h2 { margin-bottom: 12px; }
 .results-status:empty { display: none; }
 .results-status { margin: -10px 0 15px; color: var(--muted); }
 .restaurant-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(22px, 2.4vw, 46px) clamp(15px, 1.85vw, 36px); }
-.restaurant-card { min-width: 0; text-align: left; border-radius: var(--radius); }
+.restaurant-card { min-width: 0; color: #000; text-align: left; border-radius: var(--radius); }
 .restaurant-card > img { width: 100%; aspect-ratio: 349 / 207; border-radius: var(--radius); object-fit: cover; background: #efdec8; }
-.restaurant-card:hover .restaurant-name { color: var(--brick); text-decoration: underline; text-underline-offset: 3px; }
+.restaurant-card:hover .restaurant-name { text-decoration: underline; text-underline-offset: 3px; }
 .restaurant-title { display: flex; align-items: baseline; justify-content: space-between; gap: 5px 8px; margin: 3px 0 1px; }
 .restaurant-name { font-size: clamp(26px, 1.67vw, 32px); font-weight: 700; line-height: .94; }
 .rating { flex: 0 0 auto; white-space: nowrap; }
-.rating .star { color: var(--brick); }
+.rating .star { color: var(--red); }
 .restaurant-meta, .restaurant-fee, .rating { font-size: clamp(21px, 1.25vw, 24px); line-height: .95; }
 .restaurant-meta, .restaurant-fee { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin-top: 4px; }
-.restaurant-fee { color: var(--muted); }
-.restaurant-fee.free-delivery { column-gap: 4px; color: #7d7575; letter-spacing: -.035em; }
+.restaurant-meta, .restaurant-fee, .rating .review-count { color: #7d7575; }
+.restaurant-card:is(
+  [data-restaurant='soban-seoul'],
+  [data-restaurant='dragon-bowl'],
+  [data-restaurant='texas-meat']
+) .review-count { color: inherit; }
+.restaurant-fee { column-gap: 4px; }
+.restaurant-fee.free-delivery { letter-spacing: -.035em; }
 .delivery-fee-icon { flex: 0 0 auto; margin-right: 1px; }
 .free-delivery-label { color: var(--red); }
 .no-results { padding: 28px 20px; border: 1px dashed var(--line); border-radius: var(--radius); text-align: center; }

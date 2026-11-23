@@ -147,19 +147,23 @@ function restaurantCard(restaurant, showDistance) {
   const pickingUp = cart.mode === 'pickup';
   const timing = pickingUp ? 'Pick-up from' : 'From';
   const freeDelivery = !pickingUp && restaurant.freeDelivery;
+  const feeAmount = formatWon(restaurant.fee);
   const fee = freeDelivery
-    ? `<img class="delivery-fee-icon" src="${asset('delivery-scooter.png')}" alt="" width="19" height="15">
-      <del>${formatWon(restaurant.fee)}</del><span class="free-delivery-label">Free Delivery</span>`
-    : pickingUp ? 'Free pick-up' : formatWon(restaurant.fee);
+    ? `<del>${feeAmount}</del><span class="free-delivery-label">Free Delivery</span>`
+    : `<span>${feeAmount}</span>`;
+  const deliveryFee = `<img class="delivery-fee-icon" src="${asset('delivery-scooter.png')}" alt="" width="19" height="15">${fee}`;
+  const score = restaurant.rating.toFixed(1);
   return `
     <button type="button" class="restaurant-card" data-action="restaurant" data-restaurant="${restaurant.id}" aria-haspopup="dialog">
       <img src="${restaurantImage(restaurant)}" alt="" width="349" height="207" loading="lazy">
       <span class="restaurant-title">
         <span class="restaurant-name">${escapeText(restaurant.name)}</span>
-        <span class="rating" aria-label="${restaurant.rating.toFixed(1)} stars from ${restaurant.reviews} reviews"><span class="star" aria-hidden="true">★</span> ${restaurant.rating.toFixed(1)} (${restaurant.reviews})</span>
+        <span class="rating" aria-label="${score} stars from ${restaurant.reviews} reviews">
+          <span class="star" aria-hidden="true">★</span> ${score} <span class="review-count">(${restaurant.reviews})</span>
+        </span>
       </span>
       <span class="restaurant-meta"><span>${restaurant.open ? `${timing} ${restaurant.minutes} min${distance}` : 'Closed'}</span><span>${restaurant.price}</span><span>${restaurant.cuisine}${meal}</span><span>${restaurant.dietary}</span></span>
-      <span class="restaurant-fee${freeDelivery ? ' free-delivery' : ''}">${fee}</span>
+      <span class="restaurant-fee${freeDelivery ? ' free-delivery' : ''}">${pickingUp ? 'Free pick-up' : deliveryFee}</span>
     </button>`;
 }
 
