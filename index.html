@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="style.css">
   <!-- Supabase JS SDK v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="food-catalog.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 
@@ -30,10 +31,11 @@
       <div class="nav-actions">
         <button class="cart nav-cart-trigger" type="button" aria-label="Open Cart" data-cart-open>
           <img class="icon cart-icon" src="Assets/icons/cart.svg" alt="" width="18" height="18">
+          <span id="cart-count" class="cart-count" hidden>0</span>
         </button>
-        <a class="nav-button" href="#" data-preview="explore">Explore</a>
-        <a class="nav-button" href="#" data-preview="nearby">What's Nearby</a>
-        <a class="nav-button" href="#" data-preview="offers">Offers</a>
+        <a class="nav-button" href="#restaurant-heading">Explore</a>
+        <a class="nav-button" href="#restaurant-heading" data-action="nearby">What's Nearby</a>
+        <a class="nav-button" href="#offers-heading" data-action="show-offers">Offers</a>
         <a id="nav-auth-link" class="nav-button sign-up" href="login.html">Sign Up</a>
       </div>
     </nav>
@@ -61,6 +63,100 @@
           <image href="Assets/images/burger-hero.png" x="39" y="65" width="1127" height="1922"
             transform="translate(2046 0) rotate(90)" />
         </svg>
+      </div>
+    </section>
+
+    <!-- FOOD SECTION (Merged from SARA) -->
+    <section class="food-section" id="explore-food">
+      <div class="toolbar">
+        <div class="shell toolbar-inner">
+          <div class="browse-modes" role="group" aria-label="Browse options">
+            <button type="button" data-mode="delivery" aria-pressed="true">
+              <span class="mode-icon mode-delivery" aria-hidden="true"></span> Delivery
+            </button>
+            <button type="button" data-mode="pickup" aria-pressed="false">
+              <span class="mode-icon mode-pickup" aria-hidden="true"></span> Pick-up
+            </button>
+            <button type="button" data-mode="offers" aria-pressed="false">
+              <span class="mode-icon mode-offers" aria-hidden="true"></span> Offers
+            </button>
+          </div>
+          <form class="search" role="search" id="food-search">
+            <label class="visually-hidden" for="search-query">Search restaurants, cuisines, and dishes</label>
+            <span class="search-icon" aria-hidden="true"></span>
+            <input id="search-query" type="search" placeholder="Search for restaurants, cuisines, and dishes" autocomplete="off">
+          </form>
+        </div>
+      </div>
+
+      <div class="shell food-layout" aria-label="Explore food">
+        <aside class="sidebar" aria-label="Food filters and app links">
+          <section class="app-promo" aria-label="Tack-Eat app">
+            <div class="app-qr-slot"></div>
+            <div class="app-promo-body">
+              <p>Unlock more app-only deals.<br>Download now.</p>
+              <div class="store-links">
+                <button type="button" data-action="app" data-store="App Store">
+                  <img src="Assets/images/app-store.png" alt="" width="15" height="18"> App Store
+                </button>
+                <button type="button" data-action="app" data-store="Play Store">
+                  <img src="Assets/images/play-store.png" alt="" width="15" height="18"> Play Store
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <details class="filters" id="filter-panel" open>
+            <summary>Filters <span id="filter-count" class="filter-count" hidden>0</span><span class="chevron" aria-hidden="true"></span></summary>
+            <form id="filter-form">
+              <fieldset class="sort-options">
+                <legend>Sort by</legend>
+                <label><input type="radio" name="sort" value="relevance" checked> Relevance</label>
+                <label><input type="radio" name="sort" value="fastest"> Fastest delivery</label>
+                <label><input type="radio" name="sort" value="distance"> Distance</label>
+                <label><input type="radio" name="sort" value="rating"> Top rated</label>
+              </fieldset>
+              <div id="filter-groups"></div>
+              <button class="reset-filters" id="reset-filters" type="reset" hidden>Clear filters</button>
+            </form>
+          </details>
+        </aside>
+
+        <div class="food-content">
+          <section class="sign-up-banner" aria-labelledby="banner-heading">
+            <h1 id="banner-heading">Sign up for free delivery on<br>your first order</h1>
+            <a class="banner-link" href="login.html#tab-register">Sign up</a>
+          </section>
+
+          <section class="featured" aria-labelledby="cuisine-heading">
+            <h2 id="cuisine-heading">Your favourite cuisines</h2>
+            <div class="carousel cuisines-carousel">
+              <button class="carousel-arrow previous" type="button" data-scroll="-1" aria-controls="cuisine-list" aria-label="Previous cuisines" hidden>‹</button>
+              <div class="carousel-track" id="cuisine-list" aria-label="Cuisines"></div>
+              <button class="carousel-arrow next" type="button" data-scroll="1" aria-controls="cuisine-list" aria-label="More cuisines" hidden>›</button>
+            </div>
+          </section>
+
+          <section class="featured offers-section" aria-labelledby="offers-heading">
+            <h2 id="offers-heading" tabindex="-1">Offers</h2>
+            <div class="carousel offers-carousel">
+              <button class="carousel-arrow previous" type="button" data-scroll="-1" aria-controls="offer-list" aria-label="Previous offers" hidden>‹</button>
+              <div class="carousel-track" id="offer-list" aria-label="Offers"></div>
+              <button class="carousel-arrow next" type="button" data-scroll="1" aria-controls="offer-list" aria-label="More offers" hidden>›</button>
+            </div>
+          </section>
+
+          <section class="restaurants" aria-labelledby="restaurant-heading">
+            <h2 id="restaurant-heading" tabindex="-1">All restaurants</h2>
+            <p class="results-status" id="results-status" role="status"></p>
+            <div class="restaurant-grid" id="restaurant-grid"></div>
+            <div class="no-results" id="no-results" hidden>
+              <p>No restaurants match your search.</p>
+              <button class="primary-button" type="button" data-action="reset-search">Show all restaurants</button>
+            </div>
+            <noscript><p>Turn on JavaScript to browse the Tack-Eat menu.</p></noscript>
+          </section>
+        </div>
       </div>
     </section>
 
@@ -152,6 +248,12 @@
       <button class="cart-checkout-btn" type="button">Checkout</button>
     </div>
   </aside>
+
+  <dialog class="food-dialog" id="food-dialog" aria-labelledby="dialog-title">
+    <button class="close-dialog" type="button" data-action="close" aria-label="Close dialog">×</button>
+    <div id="dialog-content"></div>
+  </dialog>
+  <p id="feedback" class="feedback" role="status"></p>
 
   <dialog class="preview" aria-labelledby="preview-title" aria-describedby="preview-message">
     <h2 id="preview-title"></h2>
