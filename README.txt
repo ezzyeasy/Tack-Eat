@@ -8,8 +8,7 @@ GROUP MEMBERS:
 DESCRIPTION OF FEATURES:
 1. Interactive Shopping Cart & User Authentication
     a. Dynamic Cart Management: Add, remove, and update item quantities with automatic subtotal and total price calculation.
-    b. Persistent Cart State: Retains selected items across page reloads and user sessions.
-    c. User Account Integration (Log In / Sign Up): Secure authentication flow powered by Supabase Auth.
+    b. User Account Integration (Log In / Sign Up): Secure authentication flow powered by Supabase Auth.
 
 2. Dynamic Food Menu & Cloud Database Integration
     a. Scalable Backend CMS: Menu items, prices, categories, and availability are managed dynamically without hardcoding HTML.
@@ -19,7 +18,7 @@ DESCRIPTION OF FEATURES:
     e. Order Customization & Add-to-Cart Flow: Allows users to configure item quantities, portion sizes, and special order instructions before adding to the cart.
 
 3. Contact & Feedback System
-    a. Real-Time Form & Content Validation: Client-side JavaScript validation for required fields, email format verification, and character limits with clear user error/success feedback.
+    a. Content Validation: Client-side JavaScript validation for required fields, email format verification, and character limits with clear user error/success feedback.
 
 4. Dynamic Footer
     a. Live Real-Time Clock: Continuously updating digital clock and date display powered by JavaScript (`setInterval` / `Date` API) to show live store operating status.
@@ -31,6 +30,9 @@ DESCRIPTION OF FEATURES:
 6. Admin Dashboard
     a. Dynamic Admin Dashboard: Allows admins to view and manage menu items, categories, and store settings.
     b. Role-Based Access Control: Ensures that only authenticated users with admin privileges can access and manage the menu.
+
+7. Custom Domain
+    a. Allows users to access the website using a custom domain name.
 
 DIVISION OF TASKS:
 1. Ezzy - Function, Compiling

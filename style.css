@@ -1823,12 +1823,21 @@ button {
 .app-qr-slot {
   position: relative;
   z-index: 1;
+  display: grid;
+  place-items: center;
   width: min(65%, 178px);
   aspect-ratio: 1;
   margin-inline: auto;
+  padding: 36px;
   border: 4px solid var(--green);
   border-radius: 19px;
-  background: var(--paper);
+  background: var(--red);
+}
+
+.app-slot-logo {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
 }
 
 .app-promo-body {

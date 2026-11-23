@@ -744,16 +744,188 @@ function initCartUI() {
 }
 
 // ============================================================================
-// 7. ADMIN DASHBOARD HEADER & SIGN OUT (admin.html)
+// 7. SUPABASE MENU CMS ENGINE & ADMIN DASHBOARD (admin.html & index.html)
 // ============================================================================
+const CMS_STORAGE_KEY = "tack-eat.cms.restaurants.v1";
+
+function slugifyId(text) {
+  return (
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || `item-${Date.now()}`
+  );
+}
+
+/**
+ * Normalizes a restaurant object (either from Supabase DB or food-catalog.js)
+ */
+function normalizeRestaurant(raw) {
+  return {
+    id: raw.id,
+    name: raw.name,
+    cuisine: raw.cuisine || "Western",
+    meal: raw.meal || undefined,
+    meals: Array.isArray(raw.meals) && raw.meals.length ? raw.meals : ["Lunch", "Dinner"],
+    dietary: raw.dietary || "Halal",
+    price: raw.price || "$$",
+    minutes: Number(raw.minutes) || 15,
+    distance: Number(raw.distance) || 1.5,
+    rating: Number(raw.rating) || 4.5,
+    reviews: Number(raw.reviews) || 50,
+    fee: Number(raw.fee) || 390,
+    freeDelivery: Boolean(raw.free_delivery ?? raw.freeDelivery),
+    open: raw.open !== false,
+    image: raw.image || `Assets/images/${raw.id}.webp`,
+    offers: Array.isArray(raw.offers) ? raw.offers : ["Accept vouchers"],
+    dishes: Array.isArray(raw.dishes)
+      ? raw.dishes.map((d) => ({
+          id: d.id,
+          name: d.name,
+          description: d.description || "",
+          price: Number(d.price) || 1000,
+          buyOneGetOne: Boolean(d.buy_one_get_one ?? d.buyOneGetOne),
+        }))
+      : [],
+  };
+}
+
+/**
+ * Loads the restaurant & dish catalog from:
+ *   1. Supabase `restaurants` + `dishes` tables (if created)
+ *   2. Otherwise falls back to localStorage overrides + `food-catalog.js` defaults
+ */
+async function loadCatalogFromCMS() {
+  const defaultList =
+    typeof restaurants !== "undefined" ? restaurants.map(normalizeRestaurant) : [];
+
+  if (supabaseClient) {
+    try {
+      const [{ data: dbRests, error: rErr }, { data: dbDishes, error: dErr }] =
+        await Promise.all([
+          supabaseClient.from("restaurants").select("*").order("name"),
+          supabaseClient.from("dishes").select("*").order("name"),
+        ]);
+
+      if (!rErr && !dErr && Array.isArray(dbRests) && dbRests.length > 0) {
+        const dishesByRest = new Map();
+        for (const d of dbDishes || []) {
+          const list = dishesByRest.get(d.restaurant_id) || [];
+          list.push({
+            id: d.id,
+            name: d.name,
+            description: d.description || "",
+            price: Number(d.price) || 1000,
+            buyOneGetOne: Boolean(d.buy_one_get_one),
+          });
+          dishesByRest.set(d.restaurant_id, list);
+        }
+
+        const merged = dbRests.map((r) =>
+          normalizeRestaurant({
+            ...r,
+            dishes: dishesByRest.get(r.id) || [],
+          })
+        );
+
+        localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(merged));
+        return { catalog: merged, source: "supabase" };
+      }
+    } catch {
+      // Fallback below
+    }
+  }
+
+  // Fallback: check localStorage CMS cache, otherwise default food-catalog.js
+  try {
+    const saved = JSON.parse(localStorage.getItem(CMS_STORAGE_KEY));
+    if (Array.isArray(saved) && saved.length > 0) {
+      return { catalog: saved.map(normalizeRestaurant), source: "local" };
+    }
+  } catch {
+    // ignore
+  }
+
+  return { catalog: defaultList, source: "default" };
+}
+
+/**
+ * Seeds the default `food-catalog.js` restaurants and dishes into Supabase
+ */
+async function seedDefaultCatalogToSupabase(currentCatalog) {
+  if (!supabaseClient) return { ok: false, message: "Supabase client not initialized." };
+
+  const sourceList =
+    currentCatalog && currentCatalog.length
+      ? currentCatalog
+      : typeof restaurants !== "undefined"
+      ? restaurants.map(normalizeRestaurant)
+      : [];
+
+  const restRows = sourceList.map((r) => ({
+    id: r.id,
+    name: r.name,
+    cuisine: r.cuisine,
+    meal: r.meal || null,
+    meals: r.meals || ["Lunch", "Dinner"],
+    dietary: r.dietary,
+    price: r.price,
+    minutes: r.minutes,
+    distance: r.distance,
+    rating: r.rating,
+    reviews: r.reviews,
+    fee: r.fee,
+    free_delivery: Boolean(r.freeDelivery),
+    open: r.open !== false,
+    offers: r.offers || [],
+    image: r.image || `Assets/images/${r.id}.webp`,
+  }));
+
+  const { error: rErr } = await supabaseClient
+    .from("restaurants")
+    .upsert(restRows, { onConflict: "id" });
+
+  if (rErr) {
+    return { ok: false, message: rErr.message };
+  }
+
+  const dishRows = sourceList.flatMap((r) =>
+    (r.dishes || []).map((d) => ({
+      id: d.id,
+      restaurant_id: r.id,
+      name: d.name,
+      description: d.description || "",
+      price: Number(d.price),
+      buy_one_get_one: Boolean(d.buyOneGetOne),
+    }))
+  );
+
+  if (dishRows.length > 0) {
+    const { error: dErr } = await supabaseClient
+      .from("dishes")
+      .upsert(dishRows, { onConflict: "id,restaurant_id" });
+
+    if (dErr) {
+      return { ok: false, message: dErr.message };
+    }
+  }
+
+  return { ok: true };
+}
+
 async function initAdminDashboard() {
   const adminUserDisplay = document.getElementById("admin-user-display");
   const adminLogoutBtn = document.getElementById("admin-logout-btn");
+  const dishForm = document.getElementById("admin-dish-form");
+  const restForm = document.getElementById("admin-restaurant-form");
+  const itemsListEl = document.getElementById("admin-items-list");
 
-  if (!adminUserDisplay && !adminLogoutBtn) return;
+  if (!adminUserDisplay && !adminLogoutBtn && !dishForm) return;
 
   if (supabaseClient) {
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    const {
+      data: { user },
+    } = await supabaseClient.auth.getUser();
     if (user && adminUserDisplay) {
       const { username } = await checkUserRoleAndProfile(user);
       adminUserDisplay.textContent = `${username} (${user.email})`;
@@ -766,14 +938,401 @@ async function initAdminDashboard() {
     }
     window.location.href = "login.html";
   });
+
+  if (!dishForm || !itemsListEl) return;
+
+  const restSelect = document.getElementById("dish-restaurant-select");
+  const filterPillsEl = document.getElementById("admin-filter-pills");
+  const statRests = document.getElementById("stat-total-restaurants");
+  const statDishes = document.getElementById("stat-total-dishes");
+  const statStatus = document.getElementById("stat-cms-status");
+  const alertEl = document.getElementById("admin-cms-alert");
+  const seedBtn = document.getElementById("admin-seed-btn");
+
+  const editDishIdInput = document.getElementById("edit-dish-id");
+  const dishHeading = document.getElementById("dish-form-heading");
+  const dishNameInput = document.getElementById("menu-item-name");
+  const dishPriceInput = document.getElementById("menu-item-price");
+  const dishDescInput = document.getElementById("menu-item-desc");
+  const dishBogoInput = document.getElementById("menu-item-bogo");
+  const dishSubmitBtn = document.getElementById("dish-submit-btn");
+  const dishCancelBtn = document.getElementById("dish-cancel-btn");
+
+  let catalog = [];
+  let activeRestaurantFilter = "all";
+  let cmsSource = "default";
+
+  function showAdminAlert(type, text) {
+    if (!alertEl) return;
+    if (!text) {
+      alertEl.className = "contact-feedback hidden";
+      alertEl.textContent = "";
+      return;
+    }
+    alertEl.className = `contact-feedback feedback-${type === "error" ? "error" : "success"}`;
+    alertEl.textContent = text;
+  }
+
+  function saveLocalCatalog() {
+    localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(catalog));
+  }
+
+  function resetDishForm() {
+    dishForm.reset();
+    editDishIdInput.value = "";
+    dishHeading.textContent = "+ Add New Dish to Menu";
+    dishSubmitBtn.textContent = "Save Dish to Menu";
+  }
+
+  function renderAdminUI() {
+    // 1. Update Stats
+    const totalDishes = catalog.reduce((sum, r) => sum + (r.dishes?.length || 0), 0);
+    if (statRests) statRests.textContent = catalog.length;
+    if (statDishes) statDishes.textContent = totalDishes;
+    if (statStatus) {
+      statStatus.textContent =
+        cmsSource === "supabase" ? "● Supabase Live" : "● Local + Sync Ready";
+    }
+
+    // 2. Populate Restaurant Select Dropdown
+    const prevSelected = restSelect.value;
+    restSelect.innerHTML = catalog
+      .map((r) => `<option value="${r.id}">${r.name} (${r.cuisine})</option>`)
+      .join("");
+    if (prevSelected && catalog.some((r) => r.id === prevSelected)) {
+      restSelect.value = prevSelected;
+    }
+
+    // 3. Populate Filter Pills
+    if (filterPillsEl) {
+      filterPillsEl.innerHTML = [
+        `<button type="button" class="filter-pill ${
+          activeRestaurantFilter === "all" ? "active" : ""
+        }" data-filter="all">All (${totalDishes})</button>`,
+        ...catalog.map(
+          (r) =>
+            `<button type="button" class="filter-pill ${
+              activeRestaurantFilter === r.id ? "active" : ""
+            }" data-filter="${r.id}">${r.name} (${r.dishes?.length || 0})</button>`
+        ),
+      ].join("");
+    }
+
+    // 4. Render Dishes List grouped/filtered by restaurant
+    const visibleRestaurants =
+      activeRestaurantFilter === "all"
+        ? catalog
+        : catalog.filter((r) => r.id === activeRestaurantFilter);
+
+    const rows = [];
+    for (const r of visibleRestaurants) {
+      const thumb = r.image || `Assets/images/${r.id}.webp`;
+      for (const dish of r.dishes || []) {
+        rows.push(`
+          <article class="admin-menu-row">
+            <img src="${thumb}" alt="${r.name}" class="admin-item-thumb" onerror="this.src='Assets/images/burger-hero.png'">
+            <div class="admin-item-details">
+              <div class="admin-item-top">
+                <h3>${dish.name}</h3>
+                <span class="admin-price-badge">RM ${(dish.price / 100).toFixed(2)}</span>
+              </div>
+              <p>${dish.description}</p>
+              <div class="admin-item-meta">
+                <span class="meta-tag">${r.name} · ${r.cuisine}</span>
+                <span class="meta-tag">${r.dietary}</span>
+                ${
+                  dish.buyOneGetOne
+                    ? `<span class="meta-status status-instock">★ Buy 1 Free 1</span>`
+                    : `<span class="meta-status status-instock">● Available</span>`
+                }
+              </div>
+            </div>
+            <div class="admin-item-actions">
+              <button type="button" class="admin-action-btn" data-admin-action="edit-dish" data-rest="${r.id}" data-dish="${dish.id}">Edit</button>
+              <button type="button" class="admin-action-btn btn-danger" data-admin-action="delete-dish" data-rest="${r.id}" data-dish="${dish.id}">Delete</button>
+            </div>
+          </article>
+        `);
+      }
+    }
+
+    itemsListEl.innerHTML = rows.length
+      ? rows.join("")
+      : `<p style="color:#64748b;">No dishes in this category yet. Use the form on the left to add one!</p>`;
+  }
+
+  async function refreshAdminCatalog() {
+    const res = await loadCatalogFromCMS();
+    catalog = res.catalog;
+    cmsSource = res.source;
+    renderAdminUI();
+  }
+
+  // Filter pill click
+  filterPillsEl?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-filter]");
+    if (!btn) return;
+    activeRestaurantFilter = btn.dataset.filter;
+    renderAdminUI();
+  });
+
+  // Cancel / clear dish form
+  dishCancelBtn?.addEventListener("click", resetDishForm);
+
+  // Add or Update Dish Submit
+  dishForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const restId = restSelect.value;
+    const name = dishNameInput.value.trim();
+    const priceRm = parseFloat(dishPriceInput.value);
+    const description = dishDescInput.value.trim();
+    const buyOneGetOne = dishBogoInput.checked;
+
+    if (!restId || !name || isNaN(priceRm) || priceRm <= 0 || !description) {
+      showAdminAlert("error", "Please fill in the dish name, valid price (RM), and description.");
+      return;
+    }
+
+    const priceCents = Math.round(priceRm * 100);
+    const dishId = editDishIdInput.value || slugifyId(name);
+    const targetRest = catalog.find((r) => r.id === restId);
+    if (!targetRest) return;
+
+    // Update in-memory & localStorage catalog immediately
+    const existingIndex = targetRest.dishes.findIndex((d) => d.id === dishId);
+    const dishObj = { id: dishId, name, description, price: priceCents, buyOneGetOne };
+
+    if (existingIndex >= 0) {
+      targetRest.dishes[existingIndex] = dishObj;
+    } else {
+      targetRest.dishes.push(dishObj);
+    }
+    saveLocalCatalog();
+
+    // Sync to Supabase if tables exist
+    let syncedToDb = false;
+    if (supabaseClient) {
+      // Ensure parent restaurant exists in DB first
+      await supabaseClient.from("restaurants").upsert(
+        [
+          {
+            id: targetRest.id,
+            name: targetRest.name,
+            cuisine: targetRest.cuisine,
+            meal: targetRest.meal || null,
+            meals: targetRest.meals,
+            dietary: targetRest.dietary,
+            price: targetRest.price,
+            minutes: targetRest.minutes,
+            distance: targetRest.distance,
+            rating: targetRest.rating,
+            reviews: targetRest.reviews,
+            fee: targetRest.fee,
+            free_delivery: Boolean(targetRest.freeDelivery),
+            open: targetRest.open !== false,
+            offers: targetRest.offers || [],
+            image: targetRest.image || `Assets/images/${targetRest.id}.webp`,
+          },
+        ],
+        { onConflict: "id" }
+      );
+
+      const { error } = await supabaseClient.from("dishes").upsert(
+        [
+          {
+            id: dishId,
+            restaurant_id: restId,
+            name,
+            description,
+            price: priceCents,
+            buy_one_get_one: buyOneGetOne,
+          },
+        ],
+        { onConflict: "id,restaurant_id" }
+      );
+
+      if (!error) {
+        syncedToDb = true;
+        cmsSource = "supabase";
+      }
+    }
+
+    resetDishForm();
+    renderAdminUI();
+    showAdminAlert(
+      "success",
+      syncedToDb
+        ? `"${name}" saved to ${targetRest.name} in Supabase!`
+        : `"${name}" saved to ${targetRest.name}! (Run the CMS SQL setup in Supabase to enable cloud persistence.)`
+    );
+  });
+
+  // Add New Restaurant Submit
+  restForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("rest-name").value.trim();
+    const cuisine = document.getElementById("rest-cuisine").value;
+    const dietary = document.getElementById("rest-dietary").value;
+    const price = document.getElementById("rest-price").value;
+    const minutes = parseInt(document.getElementById("rest-minutes").value, 10) || 15;
+    const feeRm = parseFloat(document.getElementById("rest-fee").value) || 0;
+    const imageInput = document.getElementById("rest-image").value.trim();
+    const freeDelivery = document.getElementById("rest-free-delivery").checked;
+
+    if (!name) {
+      showAdminAlert("error", "Please enter a restaurant name.");
+      return;
+    }
+
+    const id = slugifyId(name);
+    const feeCents = Math.round(feeRm * 100);
+    const defaultCuisineImg = `Assets/images/${cuisine.toLowerCase()}.webp`;
+    const image = imageInput || defaultCuisineImg;
+
+    const newRest = normalizeRestaurant({
+      id,
+      name,
+      cuisine,
+      meals: ["Lunch", "Dinner"],
+      dietary,
+      price,
+      minutes,
+      distance: 1.5,
+      rating: 4.8,
+      reviews: 1,
+      fee: feeCents,
+      freeDelivery,
+      open: true,
+      image,
+      offers: ["Accept vouchers"],
+      dishes: [],
+    });
+
+    const existingIdx = catalog.findIndex((r) => r.id === id);
+    if (existingIdx >= 0) {
+      newRest.dishes = catalog[existingIdx].dishes;
+      catalog[existingIdx] = newRest;
+    } else {
+      catalog.unshift(newRest);
+    }
+    saveLocalCatalog();
+
+    let syncedToDb = false;
+    if (supabaseClient) {
+      const { error } = await supabaseClient.from("restaurants").upsert(
+        [
+          {
+            id: newRest.id,
+            name: newRest.name,
+            cuisine: newRest.cuisine,
+            meals: newRest.meals,
+            dietary: newRest.dietary,
+            price: newRest.price,
+            minutes: newRest.minutes,
+            distance: newRest.distance,
+            rating: newRest.rating,
+            reviews: newRest.reviews,
+            fee: newRest.fee,
+            free_delivery: newRest.freeDelivery,
+            open: true,
+            offers: newRest.offers,
+            image: newRest.image,
+          },
+        ],
+        { onConflict: "id" }
+      );
+      if (!error) {
+        syncedToDb = true;
+        cmsSource = "supabase";
+      }
+    }
+
+    restForm.reset();
+    activeRestaurantFilter = newRest.id;
+    renderAdminUI();
+    restSelect.value = newRest.id;
+    showAdminAlert(
+      "success",
+      syncedToDb
+        ? `Restaurant "${name}" created in Supabase! Now add dishes to it using the top form.`
+        : `Restaurant "${name}" created! Now add dishes to it using the top form.`
+    );
+  });
+
+  // Edit / Delete Dish Click Handler
+  itemsListEl.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-admin-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.adminAction;
+    const restId = btn.dataset.rest;
+    const dishId = btn.dataset.dish;
+    const targetRest = catalog.find((r) => r.id === restId);
+    if (!targetRest) return;
+
+    if (action === "edit-dish") {
+      const dish = targetRest.dishes.find((d) => d.id === dishId);
+      if (!dish) return;
+
+      restSelect.value = restId;
+      editDishIdInput.value = dish.id;
+      dishNameInput.value = dish.name;
+      dishPriceInput.value = (dish.price / 100).toFixed(2);
+      dishDescInput.value = dish.description;
+      dishBogoInput.checked = Boolean(dish.buyOneGetOne);
+
+      dishHeading.textContent = `Editing: ${dish.name}`;
+      dishSubmitBtn.textContent = "Update Dish";
+      dishForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (action === "delete-dish") {
+      targetRest.dishes = targetRest.dishes.filter((d) => d.id !== dishId);
+      saveLocalCatalog();
+
+      if (supabaseClient) {
+        await supabaseClient
+          .from("dishes")
+          .delete()
+          .eq("id", dishId)
+          .eq("restaurant_id", restId);
+      }
+
+      renderAdminUI();
+      showAdminAlert("success", "Dish removed from menu.");
+    }
+  });
+
+  // Sync Default Catalog to Supabase Button
+  seedBtn?.addEventListener("click", async () => {
+    seedBtn.disabled = true;
+    seedBtn.textContent = "Syncing to Supabase...";
+    const res = await seedDefaultCatalogToSupabase(catalog);
+    seedBtn.disabled = false;
+    seedBtn.textContent = "Sync Default Catalog to Supabase";
+
+    if (res.ok) {
+      cmsSource = "supabase";
+      await refreshAdminCatalog();
+      showAdminAlert(
+        "success",
+        "All restaurants and dishes are now synced to your Supabase database!"
+      );
+    } else {
+      showAdminAlert(
+        "error",
+        `Supabase Sync Error: ${res.message}. Run the SQL table setup first.`
+      );
+    }
+  });
+
+  await refreshAdminCatalog();
 }
 
 initAdminDashboard();
 
 // ============================================================================
-// 8. FOOD SECTION (Merged from SARA/food.js)
+// 8. FOOD SECTION (Merged from SARA/food.js + Powered by Supabase CMS)
 // ============================================================================
-function initFoodSection() {
+async function initFoodSection() {
   const filters = document.querySelector('#filter-form');
   const search = document.querySelector('#search-query');
   const cuisineList = document.querySelector('#cuisine-list');
@@ -789,10 +1348,13 @@ function initFoodSection() {
 
   if (!filters || !grid || typeof restaurants === 'undefined') return;
 
-  const byId = new Map(restaurants.map(restaurant => [restaurant.id, restaurant]));
+  // Load live catalog from Supabase CMS (or fallback to local/default catalog)
+  const { catalog: activeRestaurants } = await loadCatalogFromCMS();
+
+  const byId = new Map(activeRestaurants.map(restaurant => [restaurant.id, restaurant]));
   const offersById = new Map(offers.map(offer => [offer.id, offer]));
   const asset = name => `Assets/images/${name}`;
-  const restaurantImage = restaurant => asset(`${restaurant.id}.webp`);
+  const restaurantImage = restaurant => restaurant.image || asset(`${restaurant.id}.webp`);
   const money = cents => `RM ${(cents / 100).toFixed(2)}`;
   const maxQuantity = 20;
   const maxNoteLength = 120;
@@ -905,7 +1467,7 @@ function initFoodSection() {
   function matchingRestaurants(values, query) {
     const terms = query.split(/\s+/).filter(Boolean);
     const selections = filterGroups.map(({ key }) => [key, values.getAll(key)]);
-    const matches = restaurants.filter(restaurant => {
+    const matches = activeRestaurants.filter(restaurant => {
       const text = [restaurant.name, restaurant.cuisine, restaurant.dietary, ...restaurant.meals,
         ...restaurant.dishes.flatMap(dish => [dish.name, dish.description])].join(' ').toLowerCase();
       return (!offersOnly || restaurant.offers.length || restaurant.freeDelivery)
