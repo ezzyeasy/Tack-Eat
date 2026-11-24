@@ -105,18 +105,37 @@
 
     </section>
 
-    <!-- SECTION SEPARATOR BANNER BETWEEN ABOUT & MENU -->
+    <!-- SECTION SEPARATOR CAROUSEL BETWEEN ABOUT & MENU -->
     <div class="section-separator" aria-hidden="true">
-      <div class="separator-track">
-        <span>FRESH CRAVINGS</span>
-        <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
-        <span>EXPLORE THE MENU</span>
-        <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
-        <span>DROP A PIN &amp; ORDER</span>
-        <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
-        <span>FAST DELIVERY</span>
-        <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
-        <span>FRESH CRAVINGS</span>
+      <div class="separator-marquee">
+        <div class="separator-track">
+          <span>FRESH CRAVINGS</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>EXPLORE THE MENU</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>DROP A PIN &amp; ORDER</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>FAST DELIVERY</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>USE COUPON CODES</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>HOT &amp; FRESH BITES</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+        </div>
+        <div class="separator-track" aria-hidden="true">
+          <span>FRESH CRAVINGS</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>EXPLORE THE MENU</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>DROP A PIN &amp; ORDER</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>FAST DELIVERY</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>USE COUPON CODES</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+          <span>HOT &amp; FRESH BITES</span>
+          <img src="Assets/logo/Tack-Logo.svg" alt="" width="22" height="20">
+        </div>
       </div>
     </div>
 
@@ -179,7 +198,7 @@
         </aside>
 
         <div class="food-content">
-          <section class="sign-up-banner" aria-labelledby="banner-heading">
+          <section id="sign-up-banner" class="sign-up-banner" aria-labelledby="banner-heading">
             <h1 id="banner-heading">Sign up for free delivery on<br>your first order</h1>
             <a class="banner-link" href="login.html#tab-register">Sign up</a>
           </section>
@@ -368,19 +387,23 @@
   <!-- FLOATING BOTTOM-LEFT CART BUTTON (Appears on scroll) -->
   <button id="floating-cart-btn" class="floating-cart-btn" type="button" aria-label="Open Cart" data-cart-open>
     <img class="icon cart-icon" src="Assets/icons/cart.svg" alt="" width="22" height="22">
+    <span id="floating-cart-count" class="cart-count" hidden>0</span>
   </button>
 
   <!-- CART BACKDROP OVERLAY (50% Darker Background) -->
   <div id="cart-backdrop" class="cart-backdrop" aria-hidden="true"></div>
 
-  <!-- FLOATING RIGHT CART DRAWER (35% Width) -->
+  <!-- FLOATING RIGHT CART DRAWER (35% Width — Functional Cart & Coupon System) -->
   <aside id="cart-drawer" class="cart-drawer" aria-label="Shopping Cart" aria-hidden="true">
     <div class="cart-drawer-header">
-      <h2>Your Cart</h2>
+      <div>
+        <h2>Your Cart</h2>
+        <span id="cart-drawer-mode-subtitle" class="cart-mode-subtitle">Delivery · Seoul, KR</span>
+      </div>
       <button id="cart-close-btn" class="cart-close-btn" type="button" aria-label="Close Cart">✕</button>
     </div>
 
-    <div class="cart-drawer-body">
+    <div id="cart-drawer-body" class="cart-drawer-body">
       <div class="cart-empty-placeholder">
         <img class="cart-placeholder-icon" src="Assets/icons/cart.svg" alt="" width="44" height="44">
         <p class="cart-empty-title">Your cart is empty</p>
@@ -388,12 +411,23 @@
       </div>
     </div>
 
+    <!-- Coupon Code Input & Applied Coupon Status -->
+    <div class="cart-coupon-box">
+      <form id="cart-coupon-form" class="cart-coupon-form" novalidate>
+        <input type="text" id="cart-coupon-input" placeholder="Enter coupon code (e.g. CRUNCH)" autocomplete="off">
+        <button type="submit" class="cart-coupon-apply-btn">Apply</button>
+      </form>
+      <div id="cart-coupon-status" class="cart-coupon-status hidden"></div>
+    </div>
+
     <div class="cart-drawer-footer">
-      <div class="cart-summary-row">
-        <span>Total</span>
-        <strong>RM 0.00</strong>
+      <div id="cart-totals-breakdown" class="cart-totals-breakdown">
+        <div class="cart-summary-row">
+          <span>Total</span>
+          <strong id="cart-grand-total">₩0</strong>
+        </div>
       </div>
-      <button class="cart-checkout-btn" type="button">Checkout</button>
+      <button id="cart-checkout-btn" class="cart-checkout-btn" type="button">Checkout Order</button>
     </div>
   </aside>
 

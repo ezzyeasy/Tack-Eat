@@ -50,6 +50,10 @@
           <strong id="stat-total-dishes" class="stat-value">0</strong>
         </div>
         <div class="admin-stat-card">
+          <span class="stat-label">Active Coupons</span>
+          <strong id="stat-total-coupons" class="stat-value">0</strong>
+        </div>
+        <div class="admin-stat-card">
           <span class="stat-label">CMS Source</span>
           <strong id="stat-cms-status" class="stat-value stat-live">● Connecting...</strong>
         </div>
@@ -190,6 +194,60 @@
               <button type="submit" id="rest-submit-btn" class="admin-btn-primary">Create Restaurant</button>
             </div>
           </form>
+        </section>
+
+        <!-- CARD 3: ADD / MANAGE DISCOUNT COUPON CODES -->
+        <section class="admin-card">
+          <div class="admin-card-header">
+            <h2>+ Create Discount Coupon</h2>
+            <span class="admin-card-tag">Supabase Coupon CMS</span>
+          </div>
+
+          <form id="admin-coupon-form" class="admin-menu-form" novalidate>
+            <div class="admin-field-row">
+              <div class="admin-field">
+                <label for="coupon-code">Coupon Code</label>
+                <input type="text" id="coupon-code" placeholder="e.g., TACK50, WELCOME10" style="text-transform: uppercase;" required>
+              </div>
+
+              <div class="admin-field">
+                <label for="coupon-type">Discount Type</label>
+                <select id="coupon-type">
+                  <option value="percent">Percentage Off (%)</option>
+                  <option value="fixed">Fixed Amount Off (KRW ₩)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="admin-field-row">
+              <div class="admin-field">
+                <label for="coupon-value">Discount Value</label>
+                <input type="number" id="coupon-value" placeholder="e.g., 20 (for 20%) or 5000 (for ₩5,000)" min="1" required>
+              </div>
+
+              <div class="admin-field">
+                <label for="coupon-min-order">Min. Order Subtotal (KRW ₩)</label>
+                <input type="number" id="coupon-min-order" value="0" min="0" step="1000">
+              </div>
+            </div>
+
+            <div class="admin-field">
+              <label for="coupon-desc">Promotion Description</label>
+              <input type="text" id="coupon-desc" placeholder="e.g., 20% off any order above ₩15,000!" required>
+            </div>
+
+            <div class="admin-form-actions">
+              <button type="reset" class="admin-btn-secondary">Clear</button>
+              <button type="submit" class="admin-btn-primary">Save Coupon Code</button>
+            </div>
+          </form>
+
+          <div style="margin-top: 22px; padding-top: 16px; border-top: 2px solid #f8efe0;">
+            <h3 style="margin: 0 0 12px; font-size: 16px; color: var(--secondary);">Active Coupon Codes</h3>
+            <div id="admin-coupons-list" class="admin-items-list">
+              <p style="color: #64748b; font-size: 14px;">Loading coupons...</p>
+            </div>
+          </div>
         </section>
       </div>
 

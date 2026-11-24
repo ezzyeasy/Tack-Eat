@@ -44,21 +44,34 @@ if (dialog && title && message) {
   }
 }
 
-// Update the navbar button on index.html when logged in
+// Update the navbar button and sign-up banner on index.html when logged in
 async function syncNavbarAuthState() {
   const navAuthLink = document.getElementById("nav-auth-link");
-  if (!navAuthLink || !supabaseClient) return;
+  const signUpBanner = document.getElementById("sign-up-banner");
+  if (!supabaseClient) return;
 
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) {
-    navAuthLink.textContent = "Sign Up";
-    navAuthLink.href = "login.html";
+    if (navAuthLink) {
+      navAuthLink.textContent = "Sign Up";
+      navAuthLink.href = "login.html";
+    }
+    if (signUpBanner) {
+      signUpBanner.hidden = false;
+    }
     return;
   }
 
-  const { isAdmin, username } = await checkUserRoleAndProfile(user);
-  navAuthLink.textContent = isAdmin ? `Admin (${username})` : `Hi, ${username}`;
-  navAuthLink.href = isAdmin ? "admin.html" : "login.html";
+  // Hide the "Sign up for free delivery" banner once the user has signed up / logged in
+  if (signUpBanner) {
+    signUpBanner.hidden = true;
+  }
+
+  if (navAuthLink) {
+    const { isAdmin, username } = await checkUserRoleAndProfile(user);
+    navAuthLink.textContent = isAdmin ? `Admin (${username})` : `Hi, ${username}`;
+    navAuthLink.href = isAdmin ? "admin.html" : "login.html";
+  }
 }
 
 // ============================================================================
@@ -744,9 +757,79 @@ function initCartUI() {
 }
 
 // ============================================================================
-// 7. SUPABASE MENU CMS ENGINE & ADMIN DASHBOARD (admin.html & index.html)
+// 7. SUPABASE MENU & COUPON CMS ENGINE & ADMIN DASHBOARD (admin.html & index.html)
 // ============================================================================
 const CMS_STORAGE_KEY = "tack-eat.cms.restaurants.v2";
+const COUPONS_STORAGE_KEY = "tack-eat.cms.coupons.v1";
+
+const DEFAULT_COUPONS = [
+  {
+    code: "CRUNCH",
+    discount_type: "fixed",
+    discount_value: 5000,
+    min_order: 0,
+    description: "₩5,000 off with Tack-Eat CRUNCH promo!",
+    active: true,
+  },
+  {
+    code: "FIRST60",
+    discount_type: "percent",
+    discount_value: 60,
+    min_order: 0,
+    description: "60% off your first order!",
+    active: true,
+  },
+  {
+    code: "TACK10",
+    discount_type: "percent",
+    discount_value: 10,
+    min_order: 15000,
+    description: "10% off orders above ₩15,000!",
+    active: true,
+  },
+];
+
+function normalizeCoupon(raw) {
+  return {
+    code: String(raw.code || "").trim().toUpperCase(),
+    discount_type: raw.discount_type === "percent" ? "percent" : "fixed",
+    discount_value: Number(raw.discount_value) || 0,
+    min_order: Number(raw.min_order) || 0,
+    description: raw.description || "",
+    active: raw.active !== false,
+  };
+}
+
+async function loadCouponsFromCMS() {
+  if (supabaseClient) {
+    try {
+      const { data: dbCoupons, error } = await supabaseClient
+        .from("coupons")
+        .select("*")
+        .order("code");
+
+      if (!error && Array.isArray(dbCoupons) && dbCoupons.length > 0) {
+        const list = dbCoupons.map(normalizeCoupon);
+        localStorage.setItem(COUPONS_STORAGE_KEY, JSON.stringify(list));
+        return { coupons: list, source: "supabase" };
+      }
+    } catch {
+      // fallback below
+    }
+  }
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(COUPONS_STORAGE_KEY));
+    if (Array.isArray(saved) && saved.length > 0) {
+      return { coupons: saved.map(normalizeCoupon), source: "local" };
+    }
+  } catch {
+    // ignore
+  }
+
+  return { coupons: DEFAULT_COUPONS.map(normalizeCoupon), source: "default" };
+}
+
 const formatCurrency =
   typeof formatWon === "function"
     ? formatWon
@@ -914,6 +997,11 @@ async function seedDefaultCatalogToSupabase(currentCatalog) {
     }
   }
 
+  // Also seed default coupons if coupons table exists
+  await supabaseClient
+    .from("coupons")
+    .upsert(DEFAULT_COUPONS, { onConflict: "code" });
+
   return { ok: true };
 }
 
@@ -949,9 +1037,13 @@ async function initAdminDashboard() {
   const filterPillsEl = document.getElementById("admin-filter-pills");
   const statRests = document.getElementById("stat-total-restaurants");
   const statDishes = document.getElementById("stat-total-dishes");
+  const statCoupons = document.getElementById("stat-total-coupons");
   const statStatus = document.getElementById("stat-cms-status");
   const alertEl = document.getElementById("admin-cms-alert");
   const seedBtn = document.getElementById("admin-seed-btn");
+
+  const couponForm = document.getElementById("admin-coupon-form");
+  const couponsListEl = document.getElementById("admin-coupons-list");
 
   const editDishIdInput = document.getElementById("edit-dish-id");
   const dishHeading = document.getElementById("dish-form-heading");
@@ -963,6 +1055,7 @@ async function initAdminDashboard() {
   const dishCancelBtn = document.getElementById("dish-cancel-btn");
 
   let catalog = [];
+  let couponsList = [];
   let activeRestaurantFilter = "all";
   let cmsSource = "default";
 
@@ -993,9 +1086,46 @@ async function initAdminDashboard() {
     const totalDishes = catalog.reduce((sum, r) => sum + (r.dishes?.length || 0), 0);
     if (statRests) statRests.textContent = catalog.length;
     if (statDishes) statDishes.textContent = totalDishes;
+    if (statCoupons) statCoupons.textContent = couponsList.length;
     if (statStatus) {
       statStatus.textContent =
         cmsSource === "supabase" ? "● Supabase Live" : "● Local + Sync Ready";
+    }
+
+    // 1b. Render Active Coupons List
+    if (couponsListEl) {
+      if (couponsList.length === 0) {
+        couponsListEl.innerHTML = `<p style="color:#64748b; font-size:14px;">No coupons created yet.</p>`;
+      } else {
+        couponsListEl.innerHTML = couponsList
+          .map((c) => {
+            const badgeLabel =
+              c.discount_type === "percent"
+                ? `${c.discount_value}% OFF`
+                : `${formatCurrency(c.discount_value)} OFF`;
+            const minText =
+              c.min_order > 0 ? `Min. order ${formatCurrency(c.min_order)}` : "No min. order";
+            return `
+              <article class="admin-menu-row" style="padding: 12px 14px;">
+                <div class="admin-item-details">
+                  <div class="admin-item-top">
+                    <h3><code>${c.code}</code></h3>
+                    <span class="admin-price-badge">${badgeLabel}</span>
+                  </div>
+                  <p style="margin-bottom: 6px;">${c.description}</p>
+                  <div class="admin-item-meta">
+                    <span class="meta-tag">${minText}</span>
+                    <span class="meta-status status-instock">● Active</span>
+                  </div>
+                </div>
+                <div class="admin-item-actions">
+                  <button type="button" class="admin-action-btn btn-danger" data-coupon-delete="${c.code}">Delete</button>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
     }
 
     // 2. Populate Restaurant Select Dropdown
@@ -1066,11 +1196,88 @@ async function initAdminDashboard() {
   }
 
   async function refreshAdminCatalog() {
-    const res = await loadCatalogFromCMS();
+    const [res, couponRes] = await Promise.all([
+      loadCatalogFromCMS(),
+      loadCouponsFromCMS(),
+    ]);
     catalog = res.catalog;
-    cmsSource = res.source;
+    couponsList = couponRes.coupons;
+    cmsSource = res.source === "supabase" || couponRes.source === "supabase" ? "supabase" : res.source;
     renderAdminUI();
   }
+
+  // Create / Update Coupon Submit
+  couponForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = document.getElementById("coupon-code").value.trim().toUpperCase();
+    const discount_type = document.getElementById("coupon-type").value;
+    const discount_value = Math.round(parseFloat(document.getElementById("coupon-value").value));
+    const min_order = Math.round(parseFloat(document.getElementById("coupon-min-order").value) || 0);
+    const description = document.getElementById("coupon-desc").value.trim();
+
+    if (!code || isNaN(discount_value) || discount_value <= 0 || !description) {
+      showAdminAlert("error", "Please enter a valid coupon code, discount value, and description.");
+      return;
+    }
+
+    if (discount_type === "percent" && discount_value > 100) {
+      showAdminAlert("error", "Percentage discount cannot exceed 100%.");
+      return;
+    }
+
+    const newCoupon = normalizeCoupon({
+      code,
+      discount_type,
+      discount_value,
+      min_order,
+      description,
+      active: true,
+    });
+
+    const existingIdx = couponsList.findIndex((c) => c.code === code);
+    if (existingIdx >= 0) {
+      couponsList[existingIdx] = newCoupon;
+    } else {
+      couponsList.unshift(newCoupon);
+    }
+    localStorage.setItem(COUPONS_STORAGE_KEY, JSON.stringify(couponsList));
+
+    let syncedToDb = false;
+    if (supabaseClient) {
+      const { error } = await supabaseClient
+        .from("coupons")
+        .upsert([newCoupon], { onConflict: "code" });
+      if (!error) {
+        syncedToDb = true;
+        cmsSource = "supabase";
+      }
+    }
+
+    couponForm.reset();
+    renderAdminUI();
+    showAdminAlert(
+      "success",
+      syncedToDb
+        ? `Coupon code "${code}" saved to Supabase!`
+        : `Coupon code "${code}" saved! Customers can now apply it at checkout.`
+    );
+  });
+
+  // Delete Coupon Click
+  couponsListEl?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-coupon-delete]");
+    if (!btn) return;
+    const code = btn.dataset.couponDelete;
+    couponsList = couponsList.filter((c) => c.code !== code);
+    localStorage.setItem(COUPONS_STORAGE_KEY, JSON.stringify(couponsList));
+
+    if (supabaseClient) {
+      await supabaseClient.from("coupons").delete().eq("code", code);
+    }
+
+    renderAdminUI();
+    showAdminAlert("success", `Coupon "${code}" deleted.`);
+  });
 
   // Filter pill click
   filterPillsEl?.addEventListener("click", (e) => {
@@ -1352,11 +1559,15 @@ async function initFoodSection() {
 
   if (!filters || !grid || typeof restaurants === 'undefined') return;
 
-  // Load live catalog from Supabase CMS (or fallback to local/default catalog)
-  const { catalog: activeRestaurants } = await loadCatalogFromCMS();
+  // Load live catalog and coupons from Supabase CMS (or fallback to local/default catalog)
+  const [{ catalog: activeRestaurants }, { coupons: activeCoupons }] = await Promise.all([
+    loadCatalogFromCMS(),
+    loadCouponsFromCMS(),
+  ]);
 
   const byId = new Map(activeRestaurants.map(restaurant => [restaurant.id, restaurant]));
   const offersById = new Map(offers.map(offer => [offer.id, offer]));
+  const couponsByCode = new Map(activeCoupons.map(c => [c.code.toUpperCase(), c]));
   const asset = name => `Assets/images/${name}`;
   const restaurantImage = restaurant => restaurant.image || asset(`${restaurant.id}.webp`);
   const maxQuantity = 20;
@@ -1383,6 +1594,18 @@ async function initFoodSection() {
     price: (restaurant, value) => restaurant.price === value,
   };
 
+  // Floating Right Cart Drawer Elements
+  const cartDrawer = document.getElementById('cart-drawer');
+  const cartBackdrop = document.getElementById('cart-backdrop');
+  const cartDrawerBody = document.getElementById('cart-drawer-body');
+  const cartDrawerModeSub = document.getElementById('cart-drawer-mode-subtitle');
+  const cartTotalsBreakdown = document.getElementById('cart-totals-breakdown');
+  const cartCheckoutBtn = document.getElementById('cart-checkout-btn');
+  const cartCouponForm = document.getElementById('cart-coupon-form');
+  const cartCouponInput = document.getElementById('cart-coupon-input');
+  const cartCouponStatus = document.getElementById('cart-coupon-status');
+  const floatingCartCount = document.getElementById('floating-cart-count');
+
   let cart = readCart();
   let offersOnly = false;
   let currentDish;
@@ -1393,7 +1616,7 @@ async function initFoodSection() {
   }
 
   function readCart(raw) {
-    const empty = { lines: [], promotion: null, placedOrder: false, mode: 'delivery' };
+    const empty = { lines: [], promotion: null, couponCode: null, placedOrder: false, mode: 'delivery' };
     try {
       const saved = JSON.parse(raw === undefined ? localStorage.getItem(storageKey) : raw);
       if (!saved || !Array.isArray(saved.lines)) return empty;
@@ -1405,6 +1628,7 @@ async function initFoodSection() {
       return {
         lines,
         promotion: offersById.get(saved.promotion)?.code ? saved.promotion : null,
+        couponCode: typeof saved.couponCode === 'string' ? saved.couponCode.toUpperCase() : null,
         placedOrder: saved.placedOrder === true,
         mode: saved.mode === 'pickup' ? 'pickup' : 'delivery',
       };
@@ -1414,11 +1638,19 @@ async function initFoodSection() {
   }
 
   function updateCartBadge() {
-    if (!cartCount || !cartTrigger) return;
     const count = cart.lines.reduce((sum, line) => sum + line.quantity, 0);
-    cartCount.textContent = count;
-    cartCount.hidden = count === 0;
-    cartTrigger.setAttribute('aria-label', `Cart, ${count} ${count === 1 ? 'item' : 'items'}`);
+    if (cartCount) {
+      cartCount.textContent = count;
+      cartCount.hidden = count === 0;
+    }
+    if (floatingCartCount) {
+      floatingCartCount.textContent = count;
+      floatingCartCount.hidden = count === 0;
+    }
+    if (cartTrigger) {
+      cartTrigger.setAttribute('aria-label', `Cart, ${count} ${count === 1 ? 'item' : 'items'}`);
+    }
+    renderCartDrawer();
   }
 
   function saveCart() {
@@ -1655,26 +1887,164 @@ async function initFoodSection() {
     if (cart.mode === 'delivery') {
       for (const id of restaurantsInCart) {
         const restaurant = byId.get(id);
-        if (!restaurant.freeDelivery) delivery += restaurant.fee;
+        if (restaurant && !restaurant.freeDelivery) delivery += restaurant.fee;
       }
     }
 
     const qualifyingDishes = new Map();
     for (const line of cart.lines) {
       const dish = getDish(line.restaurantId, line.dishId);
-      if (line.portion !== 'Regular' || !dish.buyOneGetOne) continue;
+      if (!dish || line.portion !== 'Regular' || !dish.buyOneGetOne) continue;
       qualifyingDishes.set(dish, (qualifyingDishes.get(dish) ?? 0) + line.quantity);
     }
     const buyOneGetOne = [...qualifyingDishes].reduce((total, [dish, quantity]) =>
       total + Math.floor(quantity / 2) * dish.price, 0);
     const voucherSubtotal = subtotal - buyOneGetOne;
-    const voucherRules = {
-      'first-order': () => cart.placedOrder ? 0 : Math.round(voucherSubtotal * .6),
-      chicken: () => cart.lines.some(line => line.dishId === 'crispy-chicken-combo') ? fixedVoucherDiscount : 0,
-      'over-forty': () => voucherSubtotal > minimumVoucherSubtotal ? fixedVoucherDiscount : 0,
+
+    // 1. Check Admin-created Coupon Code first, or built-in Offer Card promotion
+    let voucher = 0;
+    let activeCodeLabel = null;
+
+    if (cart.couponCode && couponsByCode.has(cart.couponCode)) {
+      const c = couponsByCode.get(cart.couponCode);
+      activeCodeLabel = c.code;
+      if (voucherSubtotal >= (c.min_order || 0)) {
+        if (c.discount_type === 'percent') {
+          voucher = Math.round(voucherSubtotal * (c.discount_value / 100));
+        } else {
+          voucher = c.discount_value;
+        }
+      }
+    } else if (cart.promotion) {
+      const offerObj = offersById.get(cart.promotion);
+      activeCodeLabel = offerObj?.code || 'CRUNCH';
+      const voucherRules = {
+        'first-order': () => cart.placedOrder ? 0 : Math.round(voucherSubtotal * .6),
+        chicken: () => cart.lines.some(line => line.dishId === 'crispy-chicken-combo') ? fixedVoucherDiscount : 0,
+        'over-forty': () => voucherSubtotal > minimumVoucherSubtotal ? fixedVoucherDiscount : 0,
+      };
+      voucher = voucherRules[cart.promotion]?.() ?? 0;
+    }
+
+    voucher = Math.min(voucherSubtotal, voucher);
+    return {
+      subtotal,
+      delivery,
+      buyOneGetOne,
+      voucher,
+      activeCodeLabel,
+      total: Math.max(0, subtotal + delivery - buyOneGetOne - voucher),
     };
-    const voucher = Math.min(voucherSubtotal, voucherRules[cart.promotion]?.() ?? 0);
-    return { subtotal, delivery, buyOneGetOne, voucher, total: subtotal + delivery - buyOneGetOne - voucher };
+  }
+
+  /**
+   * Renders the right-hand floating Cart Drawer (#cart-drawer) with live items,
+   * quantity controls, coupon status, and full price breakdown.
+   */
+  function renderCartDrawer() {
+    if (!cartDrawerBody || !cartTotalsBreakdown) return;
+
+    if (cartDrawerModeSub) {
+      cartDrawerModeSub.textContent = `${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'} · Seoul, KR`;
+    }
+
+    const totals = cartTotals();
+
+    // 1. Render Cart Items or Empty State
+    if (cart.lines.length === 0) {
+      cartDrawerBody.classList.add('is-empty');
+      cartDrawerBody.innerHTML = `
+        <div class="cart-empty-placeholder">
+          <img class="cart-placeholder-icon" src="Assets/icons/cart.svg" alt="" width="44" height="44">
+          <p class="cart-empty-title">Your cart is empty</p>
+          <p class="cart-empty-sub">Click any restaurant card and add tasty dishes to your cart!</p>
+        </div>
+      `;
+    } else {
+      cartDrawerBody.classList.remove('is-empty');
+      cartDrawerBody.innerHTML = `
+        <ul class="drawer-cart-list">
+          ${cart.lines.map((line, idx) => {
+            const dish = getDish(line.restaurantId, line.dishId);
+            const rest = byId.get(line.restaurantId);
+            if (!dish || !rest) return '';
+            return `
+              <li class="drawer-cart-item">
+                <div class="drawer-item-info">
+                  <h3>${escapeText(dish.name)}</h3>
+                  <p class="drawer-item-meta">${escapeText(rest.name)} · ${line.portion}</p>
+                  ${line.notes ? `<p class="drawer-item-notes">"${escapeText(line.notes)}"</p>` : ''}
+                  <div class="drawer-item-controls">
+                    <button type="button" class="drawer-qty-btn" data-drawer-action="decrease" data-line="${idx}" aria-label="Decrease quantity" ${line.quantity <= 1 ? 'disabled' : ''}>−</button>
+                    <span class="drawer-qty-val">${line.quantity}</span>
+                    <button type="button" class="drawer-qty-btn" data-drawer-action="increase" data-line="${idx}" aria-label="Increase quantity" ${line.quantity >= maxQuantity ? 'disabled' : ''}>+</button>
+                    <button type="button" class="drawer-remove-btn" data-drawer-action="remove" data-line="${idx}">Remove</button>
+                  </div>
+                </div>
+                <span class="drawer-item-price">${formatWon(linePrice(line) * line.quantity)}</span>
+              </li>
+            `;
+          }).join('')}
+        </ul>
+      `;
+    }
+
+    // 2. Render Active Coupon Status Banner
+    if (cartCouponStatus) {
+      if (cart.couponCode && couponsByCode.has(cart.couponCode)) {
+        const c = couponsByCode.get(cart.couponCode);
+        const minPending = totals.voucher === 0 && c.min_order > 0;
+        cartCouponStatus.className = 'cart-coupon-status status-applied';
+        cartCouponStatus.innerHTML = `
+          <span>🏷️ <strong>${c.code}</strong>: ${escapeText(c.description)}${minPending ? ` (Add ${formatWon(c.min_order - (totals.subtotal - totals.buyOneGetOne))} more)` : ''}</span>
+          <button type="button" class="cart-coupon-remove" data-drawer-action="clear-coupon">Remove</button>
+        `;
+      } else if (cart.promotion && offersById.has(cart.promotion)) {
+        const off = offersById.get(cart.promotion);
+        cartCouponStatus.className = 'cart-coupon-status status-applied';
+        cartCouponStatus.innerHTML = `
+          <span>🏷️ <strong>${off.code}</strong> (${off.title} ${off.subtitle})${totals.voucher === 0 ? ' · Conditions pending' : ''}</span>
+          <button type="button" class="cart-coupon-remove" data-drawer-action="clear-coupon">Remove</button>
+        `;
+      } else {
+        cartCouponStatus.className = 'cart-coupon-status hidden';
+        cartCouponStatus.innerHTML = '';
+      }
+    }
+
+    // 3. Render Subtotal, Delivery, Discounts, and Grand Total
+    cartTotalsBreakdown.innerHTML = `
+      ${cart.lines.length > 0 ? `
+        <div class="cart-breakdown-line">
+          <span>Subtotal</span>
+          <span>${formatWon(totals.subtotal)}</span>
+        </div>
+        <div class="cart-breakdown-line">
+          <span>${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery Fee'}</span>
+          <span>${totals.delivery > 0 ? formatWon(totals.delivery) : 'Free'}</span>
+        </div>
+        ${totals.buyOneGetOne > 0 ? `
+          <div class="cart-breakdown-line discount-line">
+            <span>Buy 1 Free 1</span>
+            <span>−${formatWon(totals.buyOneGetOne)}</span>
+          </div>
+        ` : ''}
+        ${totals.voucher > 0 ? `
+          <div class="cart-breakdown-line discount-line">
+            <span>Coupon (${totals.activeCodeLabel || 'PROMO'})</span>
+            <span>−${formatWon(totals.voucher)}</span>
+          </div>
+        ` : ''}
+      ` : ''}
+      <div class="cart-summary-row">
+        <span>Total</span>
+        <strong id="cart-grand-total">${formatWon(cart.lines.length > 0 ? totals.total : 0)}</strong>
+      </div>
+    `;
+
+    if (cartCheckoutBtn) {
+      cartCheckoutBtn.disabled = cart.lines.length === 0;
+    }
   }
 
   function totalsMarkup(totals) {
@@ -1751,16 +2121,83 @@ async function initFoodSection() {
   }
 
   function confirmOrder() {
-    if (!cart.lines.length) return showCart();
+    if (!cart.lines.length) return;
     const total = cartTotals().total;
     cart.lines = [];
     cart.promotion = null;
+    cart.couponCode = null;
     cart.placedOrder = true;
     saveCart();
-    showDialog('confirmed', 'Demo order complete', `
-      <p>Order total · ${formatWon(total)}</p>
+    if (cartDrawer && cartBackdrop) {
+      cartDrawer.classList.remove('is-open');
+      cartBackdrop.classList.remove('is-open');
+      cartDrawer.setAttribute('aria-hidden', 'true');
+    }
+    showDialog('confirmed', 'Order Confirmed! 🎉', `
+      <p>Your Tack-Eat order has been placed and is being prepared.</p>
+      <p><strong>Total Paid · ${formatWon(total)}</strong></p>
       <div class="dialog-actions"><button class="primary-button" type="button" data-action="close">Back to restaurants</button></div>`);
   }
+
+  // Handle Cart Drawer Quantity / Remove / Coupon clicks & form submit
+  cartDrawer?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-drawer-action]');
+    if (!btn) return;
+    const act = btn.dataset.drawerAction;
+
+    if (act === 'clear-coupon') {
+      cart.couponCode = null;
+      cart.promotion = null;
+      saveCart();
+      announce('Coupon code removed.');
+      return;
+    }
+
+    const index = Number(btn.dataset.line);
+    const line = cart.lines[index];
+    if (!line) return;
+
+    if (act === 'increase') line.quantity = Math.min(maxQuantity, line.quantity + 1);
+    else if (act === 'decrease') line.quantity = Math.max(1, line.quantity - 1);
+    else if (act === 'remove') cart.lines.splice(index, 1);
+
+    saveCart();
+  });
+
+  cartCouponForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const rawCode = (cartCouponInput?.value || '').trim().toUpperCase();
+    if (!rawCode) return;
+
+    if (couponsByCode.has(rawCode)) {
+      cart.couponCode = rawCode;
+      cart.promotion = null;
+      cartCouponInput.value = '';
+      saveCart();
+      announce(`Coupon ${rawCode} applied!`);
+    } else if (rawCode === 'CRUNCH') {
+      cart.promotion = 'first-order';
+      cart.couponCode = null;
+      cartCouponInput.value = '';
+      saveCart();
+      announce('Coupon CRUNCH applied!');
+    } else {
+      if (cartCouponStatus) {
+        cartCouponStatus.className = 'cart-coupon-status status-error';
+        cartCouponStatus.textContent = `Invalid or expired coupon code "${rawCode}".`;
+      }
+    }
+  });
+
+  cartCheckoutBtn?.addEventListener('click', () => {
+    if (!cart.lines.length) return;
+    if (cartDrawer && cartBackdrop) {
+      cartDrawer.classList.remove('is-open');
+      cartBackdrop.classList.remove('is-open');
+      cartDrawer.setAttribute('aria-hidden', 'true');
+    }
+    showCheckout();
+  });
 
   function showOffer(id) {
     const offer = offersById.get(id);
@@ -1778,6 +2215,7 @@ async function initFoodSection() {
   function applyOffer(id) {
     dialog.close();
     cart.promotion = id;
+    cart.couponCode = null;
     saveCart();
     announce('CRUNCH selected. Review the discount in your cart.');
     if (id === 'chicken') {

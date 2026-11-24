@@ -1,5 +1,5 @@
 GROUP MEMBERS:
-1. Muhammad Izz Ukailn bin Razman (24102607)
+1. Muhammad Izz Ukail bin Razman (24102607)
 2. Nurul Adilah Binti Burhanuddin (24101010)
 3. Nur Amira Natasha Binti Rahmat (24101011)
 4. Alif Shahmi bin Ahmad Shukri (24101026)
