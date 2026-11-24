@@ -746,7 +746,11 @@ function initCartUI() {
 // ============================================================================
 // 7. SUPABASE MENU CMS ENGINE & ADMIN DASHBOARD (admin.html & index.html)
 // ============================================================================
-const CMS_STORAGE_KEY = "tack-eat.cms.restaurants.v1";
+const CMS_STORAGE_KEY = "tack-eat.cms.restaurants.v2";
+const formatCurrency =
+  typeof formatWon === "function"
+    ? formatWon
+    : new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format;
 
 function slugifyId(text) {
   return (
@@ -773,7 +777,7 @@ function normalizeRestaurant(raw) {
     distance: Number(raw.distance) || 1.5,
     rating: Number(raw.rating) || 4.5,
     reviews: Number(raw.reviews) || 50,
-    fee: Number(raw.fee) || 390,
+    fee: Number(raw.fee) || 2500,
     freeDelivery: Boolean(raw.free_delivery ?? raw.freeDelivery),
     open: raw.open !== false,
     image: raw.image || `Assets/images/${raw.id}.webp`,
@@ -783,7 +787,7 @@ function normalizeRestaurant(raw) {
           id: d.id,
           name: d.name,
           description: d.description || "",
-          price: Number(d.price) || 1000,
+          price: Number(d.price) || 10000,
           buyOneGetOne: Boolean(d.buy_one_get_one ?? d.buyOneGetOne),
         }))
       : [],
@@ -1034,7 +1038,7 @@ async function initAdminDashboard() {
             <div class="admin-item-details">
               <div class="admin-item-top">
                 <h3>${dish.name}</h3>
-                <span class="admin-price-badge">RM ${(dish.price / 100).toFixed(2)}</span>
+                <span class="admin-price-badge">${formatCurrency(dish.price)}</span>
               </div>
               <p>${dish.description}</p>
               <div class="admin-item-meta">
@@ -1084,16 +1088,16 @@ async function initAdminDashboard() {
     e.preventDefault();
     const restId = restSelect.value;
     const name = dishNameInput.value.trim();
-    const priceRm = parseFloat(dishPriceInput.value);
+    const priceWon = Math.round(parseFloat(dishPriceInput.value));
     const description = dishDescInput.value.trim();
     const buyOneGetOne = dishBogoInput.checked;
 
-    if (!restId || !name || isNaN(priceRm) || priceRm <= 0 || !description) {
-      showAdminAlert("error", "Please fill in the dish name, valid price (RM), and description.");
+    if (!restId || !name || isNaN(priceWon) || priceWon <= 0 || !description) {
+      showAdminAlert("error", "Please fill in the dish name, valid price (KRW ₩), and description.");
       return;
     }
 
-    const priceCents = Math.round(priceRm * 100);
+    const priceCents = priceWon;
     const dishId = editDishIdInput.value || slugifyId(name);
     const targetRest = catalog.find((r) => r.id === restId);
     if (!targetRest) return;
@@ -1185,7 +1189,7 @@ async function initAdminDashboard() {
     }
 
     const id = slugifyId(name);
-    const feeCents = Math.round(feeRm * 100);
+    const feeCents = Math.round(feeRm);
     const defaultCuisineImg = `Assets/images/${cuisine.toLowerCase()}.webp`;
     const image = imageInput || defaultCuisineImg;
 
@@ -1277,7 +1281,7 @@ async function initAdminDashboard() {
       restSelect.value = restId;
       editDishIdInput.value = dish.id;
       dishNameInput.value = dish.name;
-      dishPriceInput.value = (dish.price / 100).toFixed(2);
+      dishPriceInput.value = dish.price;
       dishDescInput.value = dish.description;
       dishBogoInput.checked = Boolean(dish.buyOneGetOne);
 
@@ -1355,11 +1359,10 @@ async function initFoodSection() {
   const offersById = new Map(offers.map(offer => [offer.id, offer]));
   const asset = name => `Assets/images/${name}`;
   const restaurantImage = restaurant => restaurant.image || asset(`${restaurant.id}.webp`);
-  const money = cents => `RM ${(cents / 100).toFixed(2)}`;
   const maxQuantity = 20;
   const maxNoteLength = 120;
   const storageKey = 'tack-eat.food.v1';
-  const portions = { Regular: 0, Large: 400 };
+  const portions = { Regular: 0, Large: 3000 };
   const restaurantSorts = {
     fastest: (a, b) => a.minutes - b.minutes,
     distance: (a, b) => a.distance - b.distance,
@@ -1456,7 +1459,9 @@ async function initFoodSection() {
       <button type="button" class="offer-card ${offer.color ?? ''}" data-action="offer" data-offer="${offer.id}" aria-haspopup="dialog">
         <span class="offer-shadow" aria-hidden="true"></span>
         <img class="offer-art" src="${asset(offer.image)}" alt="">
-        <span class="offer-brand" aria-hidden="true"></span>
+        <span class="offer-brand" aria-hidden="true">
+          <img src="${offer.color === 'red' ? 'Assets/logo/Tack-Eat_Logo-Orange.svg' : asset('offer-logo-green.svg')}" alt="" width="592" height="75">
+        </span>
         <span class="offer-title">${offer.title}</span>
         <span class="offer-copy">${offer.subtitle}</span>
         <span class="offer-code"><span>code</span><span>${offer.code}</span></span>
@@ -1485,20 +1490,24 @@ async function initFoodSection() {
     const distance = showDistance ? ` · ${restaurant.distance.toFixed(1)} km` : '';
     const pickingUp = cart.mode === 'pickup';
     const timing = pickingUp ? 'Pick-up from' : 'From';
-    const freeDelivery = !pickingUp && restaurant.freeDelivery;
+    const freeDelivery = restaurant.freeDelivery;
+    const feeAmount = formatWon(restaurant.fee);
     const fee = freeDelivery
-      ? `<img class="delivery-fee-icon" src="${asset('delivery-scooter.png')}" alt="" width="19" height="15">
-        <del>${money(restaurant.fee).replace(' ', '')}</del><span class="free-delivery-label">Free Delivery</span>`
-      : pickingUp ? 'Free pick-up' : money(restaurant.fee);
+      ? `<del>${feeAmount}</del><span class="free-delivery-label">Free Delivery</span>`
+      : `<span>${feeAmount}</span>`;
+    const deliveryFee = `<img class="delivery-fee-icon" src="${asset('delivery-scooter.png')}" alt="" width="19" height="15">${fee}`;
+    const score = restaurant.rating.toFixed(1);
     return `
       <button type="button" class="restaurant-card" data-action="restaurant" data-restaurant="${restaurant.id}" aria-haspopup="dialog">
         <img src="${restaurantImage(restaurant)}" alt="" width="349" height="207" loading="lazy">
         <span class="restaurant-title">
           <span class="restaurant-name">${escapeText(restaurant.name)}</span>
-          <span class="rating" aria-label="${restaurant.rating.toFixed(1)} stars from ${restaurant.reviews} reviews"><span class="star" aria-hidden="true">★</span> ${restaurant.rating.toFixed(1)} (${restaurant.reviews})</span>
+          <span class="rating" aria-label="${score} stars from ${restaurant.reviews} reviews">
+            <span class="star" aria-hidden="true">✭</span> ${score} <span class="review-count">(${restaurant.reviews})</span>
+          </span>
         </span>
         <span class="restaurant-meta"><span>${restaurant.open ? `${timing} ${restaurant.minutes} min${distance}` : 'Closed'}</span><span>${restaurant.price}</span><span>${restaurant.cuisine}${meal}</span><span>${restaurant.dietary}</span></span>
-        <span class="restaurant-fee${freeDelivery ? ' free-delivery' : ''}">${fee}</span>
+        <span class="restaurant-fee${freeDelivery ? ' free-delivery' : ''}" title="Delivery fee">${deliveryFee}</span>
       </button>`;
   }
 
@@ -1589,7 +1598,7 @@ async function initFoodSection() {
             <button type="button" data-action="dish" data-restaurant="${restaurant.id}" data-dish="${dish.id}" ${restaurant.open ? '' : 'disabled'}>
               <h3>${dish.name}</h3><p>${dish.description}</p>
             </button>
-            <strong class="dish-price">${money(dish.price)}</strong>
+            <strong class="dish-price">${formatWon(dish.price)}</strong>
           </li>`).join('')}
       </ul>
       <img class="dialog-photo" src="${restaurantImage(restaurant)}" alt="" width="349" height="207">`);
@@ -1602,13 +1611,13 @@ async function initFoodSection() {
       <p>${dish.description}</p>
       <form class="dish-form" id="dish-form">
         <div class="dish-options">
-          <label>Portion <select name="portion"><option>Regular</option><option value="Large">Large (+${money(portions.Large)})</option></select></label>
+          <label>Portion <select name="portion"><option>Regular</option><option value="Large">Large (+${formatWon(portions.Large)})</option></select></label>
           <label>Quantity <input name="quantity" type="number" min="1" max="${maxQuantity}" step="1" value="1" required></label>
         </div>
         <label>Special instructions <textarea name="notes" rows="2" maxlength="${maxNoteLength}" placeholder="Optional"></textarea></label>
         <div class="dialog-actions">
           <button class="secondary-button" type="button" data-action="restaurant" data-restaurant="${restaurantId}">Back to menu</button>
-          <button class="primary-button" id="add-to-cart" type="submit">Add to cart · ${money(dish.price)}</button>
+          <button class="primary-button" id="add-to-cart" type="submit">Add to cart · ${formatWon(dish.price)}</button>
         </div>
         <p id="dish-status" class="order-note" role="status"></p>
       </form>`);
@@ -1661,8 +1670,8 @@ async function initFoodSection() {
     const voucherSubtotal = subtotal - buyOneGetOne;
     const voucherRules = {
       'first-order': () => cart.placedOrder ? 0 : Math.round(voucherSubtotal * .6),
-      chicken: () => cart.lines.some(line => line.dishId === 'crispy-chicken-combo') ? 1000 : 0,
-      'over-forty': () => voucherSubtotal > 4000 ? 1000 : 0,
+      chicken: () => cart.lines.some(line => line.dishId === 'crispy-chicken-combo') ? fixedVoucherDiscount : 0,
+      'over-forty': () => voucherSubtotal > minimumVoucherSubtotal ? fixedVoucherDiscount : 0,
     };
     const voucher = Math.min(voucherSubtotal, voucherRules[cart.promotion]?.() ?? 0);
     return { subtotal, delivery, buyOneGetOne, voucher, total: subtotal + delivery - buyOneGetOne - voucher };
@@ -1671,11 +1680,11 @@ async function initFoodSection() {
   function totalsMarkup(totals) {
     return `
       <dl class="order-totals">
-        <div><dt>Subtotal</dt><dd>${money(totals.subtotal)}</dd></div>
-        <div><dt>${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'}</dt><dd>${totals.delivery ? money(totals.delivery) : 'Free'}</dd></div>
-        ${totals.buyOneGetOne ? `<div><dt>Buy 1 Free 1</dt><dd>−${money(totals.buyOneGetOne)}</dd></div>` : ''}
-        ${totals.voucher ? `<div><dt>CRUNCH</dt><dd>−${money(totals.voucher)}</dd></div>` : ''}
-        <div class="grand-total"><dt>Total</dt><dd>${money(totals.total)}</dd></div>
+        <div><dt>Subtotal</dt><dd>${formatWon(totals.subtotal)}</dd></div>
+        <div><dt>${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'}</dt><dd>${totals.delivery ? formatWon(totals.delivery) : 'Free'}</dd></div>
+        ${totals.buyOneGetOne ? `<div><dt>Buy 1 Free 1</dt><dd>−${formatWon(totals.buyOneGetOne)}</dd></div>` : ''}
+        ${totals.voucher ? `<div><dt>CRUNCH</dt><dd>−${formatWon(totals.voucher)}</dd></div>` : ''}
+        <div class="grand-total"><dt>Total</dt><dd>${formatWon(totals.total)}</dd></div>
       </dl>`;
   }
 
@@ -1695,7 +1704,7 @@ async function initFoodSection() {
               <button class="remove-line" type="button" data-action="remove" data-line="${index}" aria-label="Remove ${dish.name}">Remove</button>
             </div>` : ''}
           </div>
-          <strong>${money(linePrice(line) * line.quantity)}</strong>
+          <strong>${formatWon(linePrice(line) * line.quantity)}</strong>
         </li>`;
     }).join('')}</ul>`;
   }
@@ -1749,7 +1758,7 @@ async function initFoodSection() {
     cart.placedOrder = true;
     saveCart();
     showDialog('confirmed', 'Demo order complete', `
-      <p>Order total · ${money(total)}</p>
+      <p>Order total · ${formatWon(total)}</p>
       <div class="dialog-actions"><button class="primary-button" type="button" data-action="close">Back to restaurants</button></div>`);
   }
 
@@ -1843,7 +1852,7 @@ async function initFoodSection() {
     const values = new FormData(event.target.form);
     const line = { ...currentDish, portion: values.get('portion') };
     const quantity = Number(values.get('quantity'));
-    document.querySelector('#add-to-cart').textContent = `Add to cart · ${money(linePrice(line) * (quantity || 1))}`;
+    document.querySelector('#add-to-cart').textContent = `Add to cart · ${formatWon(linePrice(line) * (quantity || 1))}`;
   });
 
   search.addEventListener('input', renderRestaurants);
@@ -1941,9 +1950,10 @@ function initFooterSection() {
       const t = new Date().toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Asia/Kuala_Lumpur',
+        timeZone: 'Asia/Seoul',
+        hour12: false,
       });
-      localTimeEl.textContent = `${t} (SGT +8)`;
+      localTimeEl.textContent = `${t} (GMT +9)`;
     }
     tick();
     setInterval(tick, 30000);
