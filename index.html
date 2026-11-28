@@ -20,16 +20,23 @@
         <a class="logo" href="#home" aria-label="Tack-Eat home">
           <img src="Assets/logo/Tack-Eat_Logo-White.svg" alt="" width="164" height="21">
         </a>
-        <button class="nav-button location" type="button" data-preview="location" aria-haspopup="dialog">
+        <button class="nav-button location" id="nav-location-btn" type="button" data-action="location" aria-haspopup="dialog" title="Change delivery location & contact info">
           <img class="icon pin-icon" src="Assets/icons/map-pin.svg" alt="" width="12" height="12">
-          Seoul, KR · Now
+          <span id="nav-location-text" class="nav-location-text">Seoul, KR · Now</span>
           <span class="chevron" aria-hidden="true"></span>
         </button>
       </div>
 
-      <div class="nav-actions">
+      <button class="nav-hamburger" id="nav-hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-actions-menu">
+        <span class="hamburger-bar" aria-hidden="true"></span>
+        <span class="hamburger-bar" aria-hidden="true"></span>
+        <span class="hamburger-bar" aria-hidden="true"></span>
+      </button>
+
+      <div class="nav-actions" id="nav-actions-menu">
         <button class="cart nav-cart-trigger" type="button" aria-label="Open Cart" data-cart-open>
           <img class="icon cart-icon" src="Assets/icons/cart.svg" alt="" width="18" height="18">
+          <span class="nav-cart-label">Cart</span>
           <span id="cart-count" class="cart-count" hidden>0</span>
         </button>
         <a class="nav-button" href="#restaurant-heading">Explore</a>

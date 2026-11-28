@@ -44,6 +44,50 @@ if (dialog && title && message) {
   }
 }
 
+// Mobile Hamburger Navigation Toggle
+const navbarEl = document.querySelector(".navbar");
+const navHamburgerBtn = document.getElementById("nav-hamburger");
+const navActionsMenu = document.getElementById("nav-actions-menu");
+
+function closeMobileNavbar() {
+  if (!navbarEl || !navHamburgerBtn) return;
+  navbarEl.classList.remove("is-open");
+  navHamburgerBtn.setAttribute("aria-expanded", "false");
+}
+
+if (navbarEl && navHamburgerBtn && navActionsMenu) {
+  navHamburgerBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = navbarEl.classList.toggle("is-open");
+    navHamburgerBtn.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  navActionsMenu.addEventListener("click", (e) => {
+    if (e.target.closest("a, button")) {
+      closeMobileNavbar();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (navbarEl.classList.contains("is-open") && !navbarEl.contains(e.target)) {
+      closeMobileNavbar();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && navbarEl.classList.contains("is-open")) {
+      closeMobileNavbar();
+      navHamburgerBtn.focus();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 768 && navbarEl.classList.contains("is-open")) {
+      closeMobileNavbar();
+    }
+  });
+}
+
 // Update the navbar button and sign-up banner on index.html when logged in
 async function syncNavbarAuthState() {
   const navAuthLink = document.getElementById("nav-auth-link");
@@ -1605,6 +1649,212 @@ async function initFoodSection() {
   const cartCouponInput = document.getElementById('cart-coupon-input');
   const cartCouponStatus = document.getElementById('cart-coupon-status');
   const floatingCartCount = document.getElementById('floating-cart-count');
+  const navLocationText = document.getElementById('nav-location-text');
+
+  // ==========================================================================
+  // ACCOUNT-CONNECTED SAVED LOCATIONS & CONTACT MANAGER (Navbar Only)
+  // ==========================================================================
+  let locationAccountUser = null;
+  let locationAccountUsername = '';
+  let savedLocations = [];
+  let activeLocationId = null;
+
+  function getLocationStorageKey() {
+    return locationAccountUser
+      ? `tack_eat_locations_user_${locationAccountUser.id}`
+      : 'tack_eat_locations_guest';
+  }
+
+  function getLabelIcon(label = '') {
+    const clean = label.trim().toLowerCase();
+    if (clean.includes('home')) return '🏠';
+    if (clean.includes('office') || clean.includes('work')) return '🏢';
+    if (clean.includes('campus') || clean.includes('dorm') || clean.includes('school')) return '🎓';
+    if (clean.includes('partner') || clean.includes('friend')) return '❤️';
+    return '📍';
+  }
+
+  function getActiveLocation() {
+    if (!savedLocations.length) return null;
+    return savedLocations.find(loc => loc.id === activeLocationId) || savedLocations[0];
+  }
+
+  function getFormattedLocationSummary() {
+    const active = getActiveLocation();
+    if (!active) return 'Seoul, KR · Now';
+    return `${active.label} · ${active.address}`;
+  }
+
+  function updateNavbarLocationDisplay() {
+    const summary = getFormattedLocationSummary();
+    if (navLocationText) {
+      navLocationText.textContent = summary;
+    }
+    if (cartDrawerModeSub) {
+      cartDrawerModeSub.textContent = `${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'} · ${summary}`;
+    }
+  }
+
+  async function loadAccountLocations() {
+    if (supabaseClient) {
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        locationAccountUser = user || null;
+        if (user) {
+          const profileInfo = await checkUserRoleAndProfile(user);
+          locationAccountUsername = profileInfo.username || user.email?.split('@')[0] || 'Member';
+        }
+      } catch {
+        locationAccountUser = null;
+      }
+    }
+
+    const localKey = getLocationStorageKey();
+    let localData = null;
+    try {
+      localData = JSON.parse(localStorage.getItem(localKey));
+    } catch {
+      localData = null;
+    }
+
+    // 1. If authenticated, check Supabase Auth user_metadata (and merge with local cache)
+    const metaLocations = locationAccountUser?.user_metadata?.saved_locations;
+    const metaActiveId = locationAccountUser?.user_metadata?.active_location_id;
+
+    if (Array.isArray(metaLocations) && metaLocations.length > 0) {
+      savedLocations = metaLocations;
+      activeLocationId = metaActiveId || metaLocations[0].id;
+      try {
+        localStorage.setItem(localKey, JSON.stringify({ locations: savedLocations, activeId: activeLocationId }));
+      } catch { /* ignore */ }
+    } else if (localData && Array.isArray(localData.locations)) {
+      savedLocations = localData.locations;
+      activeLocationId = localData.activeId || (savedLocations[0]?.id ?? null);
+    } else {
+      savedLocations = [];
+      activeLocationId = null;
+    }
+
+    updateNavbarLocationDisplay();
+  }
+
+  async function persistAccountLocations() {
+    const localKey = getLocationStorageKey();
+    try {
+      localStorage.setItem(localKey, JSON.stringify({
+        locations: savedLocations,
+        activeId: activeLocationId,
+      }));
+    } catch { /* ignore */ }
+
+    updateNavbarLocationDisplay();
+
+    // Sync directly to the user's Supabase Auth account metadata so it follows their account
+    if (supabaseClient && locationAccountUser) {
+      try {
+        await supabaseClient.auth.updateUser({
+          data: {
+            saved_locations: savedLocations,
+            active_location_id: activeLocationId,
+          },
+        });
+      } catch {
+        // Fallback already stored in user-scoped localStorage
+      }
+    }
+  }
+
+  function showLocationManager(editingId = null) {
+    const editingLoc = editingId ? savedLocations.find(l => l.id === editingId) : null;
+    const activeLoc = getActiveLocation();
+    const defaultContactName = editingLoc?.contactName || locationAccountUsername || '';
+    const defaultContactPhone = editingLoc?.contactPhone || (savedLocations[0]?.contactPhone ?? '');
+    const currentLabel = editingLoc?.label || 'Home';
+    const presets = ['Home', 'Office', 'Campus', 'Other'];
+
+    const accountBannerHtml = locationAccountUser
+      ? `<div class="location-account-banner">
+           <span>✓ Connected to account <strong>@${escapeText(locationAccountUsername)}</strong> — Locations auto-save to your account</span>
+         </div>`
+      : `<div class="location-account-banner">
+           <span>Saving on this device. <a href="login.html">Sign in / Register</a> to sync locations (Home, Office, etc.) to your account.</span>
+         </div>`;
+
+    const savedListHtml = savedLocations.length > 0
+      ? `<div class="saved-locations-section">
+           <div class="saved-locations-heading">Your Saved Locations (${savedLocations.length})</div>
+           <ul class="saved-locations-list">
+             ${savedLocations.map(loc => {
+               const isActive = activeLoc && activeLoc.id === loc.id;
+               return `
+                 <li class="saved-location-card ${isActive ? 'is-active' : ''}">
+                   <div class="saved-location-main">
+                     <div class="saved-location-header">
+                       <span class="saved-location-tag">${getLabelIcon(loc.label)} ${escapeText(loc.label)}</span>
+                       ${isActive ? '<span class="saved-location-active-pill">Active on Navbar</span>' : ''}
+                     </div>
+                     <p class="saved-location-address">${escapeText(loc.address)}</p>
+                     <p class="saved-location-contact">👤 ${escapeText(loc.contactName)} · 📞 ${escapeText(loc.contactPhone)}</p>
+                     ${loc.notes ? `<p class="saved-location-notes">Note: "${escapeText(loc.notes)}"</p>` : ''}
+                   </div>
+                   <div class="saved-location-actions">
+                     ${!isActive ? `<button type="button" class="loc-action-btn loc-use-btn" data-action="select-location" data-location-id="${loc.id}">Use Location</button>` : ''}
+                     <div class="saved-location-actions-row">
+                       <button type="button" class="loc-action-btn" data-action="edit-location" data-location-id="${loc.id}">Edit</button>
+                       <button type="button" class="loc-action-btn loc-delete-btn" data-action="delete-location" data-location-id="${loc.id}">Delete</button>
+                     </div>
+                   </div>
+                 </li>
+               `;
+             }).join('')}
+           </ul>
+         </div>`
+      : `<p class="order-note">No saved locations yet. Add your Home, Office, or delivery address & contact details below!</p>`;
+
+    showDialog('location', 'Delivery Location & Contact', `
+      ${accountBannerHtml}
+      ${savedListHtml}
+      <div class="location-form-divider">
+        <h3>${editingLoc ? `Edit "${escapeText(editingLoc.label)}" Location` : '+ Add New Location & Contact Info'}</h3>
+      </div>
+      <form class="dish-form" id="location-manager-form">
+        <input type="hidden" name="editId" value="${editingLoc ? escapeText(editingLoc.id) : ''}">
+        <div>
+          <label>Location Label (e.g. Home, Office)</label>
+          <div class="location-preset-chips">
+            ${presets.map(preset => `
+              <button type="button" class="location-preset-chip ${currentLabel.toLowerCase() === preset.toLowerCase() ? 'is-selected' : ''}" data-action="location-preset" data-preset="${preset}">
+                ${getLabelIcon(preset)} ${preset}
+              </button>
+            `).join('')}
+          </div>
+          <input type="text" id="location-label-input" name="label" value="${escapeText(currentLabel)}" placeholder="Home, Office, Dorm, etc." maxlength="32" required>
+        </div>
+        <label>
+          Delivery Address (Manual Entry)
+          <input type="text" name="address" value="${editingLoc ? escapeText(editingLoc.address) : ''}" placeholder="e.g. 123 Teheran-ro, Apt 402, Gangnam-gu, Seoul" maxlength="120" required>
+        </label>
+        <div class="location-contact-grid">
+          <label>
+            Contact Name
+            <input type="text" name="contactName" value="${escapeText(defaultContactName)}" placeholder="Recipient full name" maxlength="60" required>
+          </label>
+          <label>
+            Contact Phone Number
+            <input type="tel" name="contactPhone" value="${escapeText(defaultContactPhone)}" placeholder="e.g. 010-1234-5678" maxlength="30" required>
+          </label>
+        </div>
+        <label>
+          Delivery Instructions / Gate Code (Optional)
+          <input type="text" name="notes" value="${editingLoc?.notes ? escapeText(editingLoc.notes) : ''}" placeholder="e.g. Leave at reception / Door pin #1234" maxlength="100">
+        </label>
+        <div class="dialog-actions">
+          ${editingLoc ? '<button class="secondary-button" type="button" data-action="location">Cancel Edit</button>' : '<button class="secondary-button" type="button" data-action="locate-nearby">Show Nearby Spots</button>'}
+          <button class="primary-button" type="submit">${editingLoc ? 'Update Location' : 'Save & Use Location'}</button>
+        </div>
+      </form>
+    `);
+  }
 
   let cart = readCart();
   let offersOnly = false;
@@ -1680,15 +1930,15 @@ async function initFoodSection() {
         ${values.map(value => `<label><input type="checkbox" name="${key}" value="${value}"><span>${value}</span></label>`).join('')}
       </fieldset>`).join('');
 
-    cuisineList.innerHTML = cuisines.map(cuisine => `
-      <button type="button" class="cuisine-card" data-action="cuisine" data-cuisine="${cuisine}" aria-pressed="false">
+    cuisineList.innerHTML = cuisines.map((cuisine, i) => `
+      <button type="button" class="cuisine-card" style="--card-i:${i}" data-action="cuisine" data-cuisine="${cuisine}" aria-pressed="false">
         <img src="${asset(`${cuisine.toLowerCase()}.webp`)}" alt="" width="110" height="108">
         <span>${cuisine}</span>
       </button>`).join('');
 
     const carouselOffers = [...offers, offersById.get('chicken')];
-    offerList.innerHTML = carouselOffers.map(offer => `
-      <button type="button" class="offer-card ${offer.color ?? ''}" data-action="offer" data-offer="${offer.id}" aria-haspopup="dialog">
+    offerList.innerHTML = carouselOffers.map((offer, i) => `
+      <button type="button" class="offer-card ${offer.color ?? ''}" style="--card-i:${i}" data-action="offer" data-offer="${offer.id}" aria-haspopup="dialog">
         <span class="offer-shadow" aria-hidden="true"></span>
         <img class="offer-art" src="${asset(offer.image)}" alt="">
         <span class="offer-brand" aria-hidden="true">
@@ -1717,7 +1967,7 @@ async function initFoodSection() {
     return compare ? matches.sort(compare) : matches;
   }
 
-  function restaurantCard(restaurant, showDistance) {
+  function restaurantCard(restaurant, showDistance, index = 0) {
     const meal = restaurant.meal ? ` · ${restaurant.meal}` : '';
     const distance = showDistance ? ` · ${restaurant.distance.toFixed(1)} km` : '';
     const pickingUp = cart.mode === 'pickup';
@@ -1730,7 +1980,7 @@ async function initFoodSection() {
     const deliveryFee = `<img class="delivery-fee-icon" src="${asset('delivery-scooter.png')}" alt="" width="19" height="15">${fee}`;
     const score = restaurant.rating.toFixed(1);
     return `
-      <button type="button" class="restaurant-card" data-action="restaurant" data-restaurant="${restaurant.id}" aria-haspopup="dialog">
+      <button type="button" class="restaurant-card" style="--card-i:${index}" data-action="restaurant" data-restaurant="${restaurant.id}" aria-haspopup="dialog">
         <img src="${restaurantImage(restaurant)}" alt="" width="349" height="207" loading="lazy">
         <span class="restaurant-title">
           <span class="restaurant-name">${escapeText(restaurant.name)}</span>
@@ -1756,7 +2006,7 @@ async function initFoodSection() {
     results.textContent = activeCount || offersOnly || query || sort !== 'relevance'
       ? `${matches.length} ${matches.length === 1 ? 'restaurant' : 'restaurants'} found`
       : '';
-    grid.innerHTML = matches.map(restaurant => restaurantCard(restaurant, sort === 'distance')).join('');
+    grid.innerHTML = matches.map((restaurant, idx) => restaurantCard(restaurant, sort === 'distance', idx)).join('');
     grid.hidden = matches.length === 0;
     document.querySelector('#no-results').hidden = matches.length > 0;
 
@@ -1945,7 +2195,7 @@ async function initFoodSection() {
     if (!cartDrawerBody || !cartTotalsBreakdown) return;
 
     if (cartDrawerModeSub) {
-      cartDrawerModeSub.textContent = `${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'} · Seoul, KR`;
+      cartDrawerModeSub.textContent = `${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'} · ${getFormattedLocationSummary()}`;
     }
 
     const totals = cartTotals();
@@ -2109,8 +2359,22 @@ async function initFoodSection() {
 
   function showCheckout(focus = true) {
     if (!cart.lines.length) return showCart(focus);
+    const activeLoc = getActiveLocation();
+    const locBlock = activeLoc
+      ? `<div class="checkout-location-box">
+           <strong>${getLabelIcon(activeLoc.label)} ${escapeText(activeLoc.label)} — ${escapeText(activeLoc.address)}</strong>
+           <p>👤 ${escapeText(activeLoc.contactName)} · 📞 ${escapeText(activeLoc.contactPhone)}</p>
+           ${activeLoc.notes ? `<p>Note: "${escapeText(activeLoc.notes)}"</p>` : ''}
+           <p class="checkout-loc-hint">To change location or contact info, use the location button in the top navbar.</p>
+         </div>`
+      : `<div class="checkout-location-box">
+           <strong>📍 Default Area — Seoul, KR</strong>
+           <p class="checkout-loc-hint">Tip: You can add your Home/Office address & contact info from the top navbar location button.</p>
+         </div>`;
+
     showDialog('checkout', 'Review order', `
-      <p>${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'} · Seoul, KR</p>
+      <p>${cart.mode === 'pickup' ? 'Pick-up' : 'Delivery'} · ${escapeText(getFormattedLocationSummary())}</p>
+      ${locBlock}
       ${cartLines(false)}
       ${totalsMarkup(cartTotals())}
       <p class="order-note">Demo order for this device.</p>
@@ -2123,6 +2387,7 @@ async function initFoodSection() {
   function confirmOrder() {
     if (!cart.lines.length) return;
     const total = cartTotals().total;
+    const activeLoc = getActiveLocation();
     cart.lines = [];
     cart.promotion = null;
     cart.couponCode = null;
@@ -2135,6 +2400,7 @@ async function initFoodSection() {
     }
     showDialog('confirmed', 'Order Confirmed! 🎉', `
       <p>Your Tack-Eat order has been placed and is being prepared.</p>
+      ${activeLoc ? `<p>Delivering to <strong>${escapeText(activeLoc.label)} (${escapeText(activeLoc.address)})</strong> · Contact: <strong>${escapeText(activeLoc.contactName)} (${escapeText(activeLoc.contactPhone)})</strong></p>` : ''}
       <p><strong>Total Paid · ${formatWon(total)}</strong></p>
       <div class="dialog-actions"><button class="primary-button" type="button" data-action="close">Back to restaurants</button></div>`);
   }
@@ -2246,9 +2512,41 @@ async function initFoodSection() {
     'reset-search': () => { search.value = ''; offersOnly = false; resetFilters(); focusSection('#restaurant-heading'); },
     nearby: (button, event) => { event?.preventDefault(); showNearby(); },
     'locate-nearby': () => { dialog.close(); showNearby(); },
-    location: () => showDialog('location', 'Seoul, KR', `
-      <p>Browse restaurants near the Seoul location shown on this menu.</p>
-      <div class="dialog-actions"><button class="primary-button" type="button" data-action="locate-nearby">Show nearby</button></div>`),
+    location: () => showLocationManager(),
+    'location-preset': button => {
+      const preset = button.dataset.preset;
+      const labelInput = document.getElementById('location-label-input');
+      if (labelInput && preset) {
+        labelInput.value = preset;
+        for (const chip of dialogContent.querySelectorAll('.location-preset-chip')) {
+          chip.classList.toggle('is-selected', chip.dataset.preset === preset);
+        }
+      }
+    },
+    'select-location': async button => {
+      const locId = button.dataset.locationId;
+      const target = savedLocations.find(l => l.id === locId);
+      if (!target) return;
+      activeLocationId = target.id;
+      await persistAccountLocations();
+      showLocationManager();
+      announce(`Active location set to ${target.label} (${target.address}).`);
+    },
+    'edit-location': button => {
+      showLocationManager(button.dataset.locationId);
+    },
+    'delete-location': async button => {
+      const locId = button.dataset.locationId;
+      const target = savedLocations.find(l => l.id === locId);
+      if (!target) return;
+      savedLocations = savedLocations.filter(l => l.id !== locId);
+      if (activeLocationId === locId) {
+        activeLocationId = savedLocations[0]?.id ?? null;
+      }
+      await persistAccountLocations();
+      showLocationManager();
+      announce(`Removed saved location "${target.label}".`);
+    },
     app: button => showDialog('app', 'Tack-Eat app', `
       <p>The ${button.dataset.store} link is pending. You can browse the current offers here.</p>
       <div class="dialog-actions"><button class="primary-button" type="button" data-action="browse-app-offers">Browse offers</button></div>`),
@@ -2279,7 +2577,44 @@ async function initFoodSection() {
       || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
   });
 
-  dialog.addEventListener('submit', event => {
+  dialog.addEventListener('submit', async event => {
+    if (event.target.id === 'location-manager-form') {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const editId = (formData.get('editId') || '').toString().trim();
+      const label = (formData.get('label') || '').toString().trim() || 'Home';
+      const address = (formData.get('address') || '').toString().trim();
+      const contactName = (formData.get('contactName') || '').toString().trim();
+      const contactPhone = (formData.get('contactPhone') || '').toString().trim();
+      const notes = (formData.get('notes') || '').toString().trim();
+
+      if (!address || !contactName || !contactPhone) return;
+
+      if (editId) {
+        const idx = savedLocations.findIndex(l => l.id === editId);
+        if (idx !== -1) {
+          savedLocations[idx] = { ...savedLocations[idx], label, address, contactName, contactPhone, notes };
+          activeLocationId = editId;
+        }
+      } else {
+        const newLoc = {
+          id: `loc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          label,
+          address,
+          contactName,
+          contactPhone,
+          notes,
+        };
+        savedLocations.unshift(newLoc);
+        activeLocationId = newLoc.id;
+      }
+
+      await persistAccountLocations();
+      showLocationManager();
+      announce(`Saved & selected "${label}" (${address}).`);
+      return;
+    }
+
     if (event.target.id !== 'dish-form') return;
     event.preventDefault();
     addDish(event.target);
@@ -2327,6 +2662,7 @@ async function initFoodSection() {
   setupCarousel(cuisineList);
   setupCarousel(offerList, true);
   renderRestaurants();
+  await loadAccountLocations();
   updateCartBadge();
 }
 
@@ -2399,3 +2735,104 @@ function initFooterSection() {
 }
 
 initFooterSection();
+
+// ============================================================================
+// 10. SCROLL-REVEAL ANIMATIONS FOR ABOUT, MENU & INTRO SECTIONS
+// ============================================================================
+function initScrollRevealAnimations() {
+  const aboutSection = document.getElementById('about');
+  const revealTargets = [
+    { selector: '.food-section .toolbar', delay: 0 },
+    { selector: '.food-section .sidebar', delay: 0.06 },
+    { selector: '#sign-up-banner', delay: 0.08 },
+    { selector: '.food-section .featured', delay: 0.12 },
+    { selector: '.food-section .offers-section', delay: 0.16 },
+    { selector: '.food-section .restaurants', delay: 0.1 },
+    { selector: '.intro .intro__logo', delay: 0 },
+    { selector: '.intro .intro__image', delay: 0.1 },
+    { selector: '.intro .intro__text', delay: 0.18 },
+  ];
+
+  const elementsToObserve = [];
+
+  if (aboutSection) {
+    elementsToObserve.push(aboutSection);
+  }
+
+  for (const { selector, delay } of revealTargets) {
+    const el = document.querySelector(selector);
+    if (!el) continue;
+    el.classList.add('scroll-reveal');
+    if (delay) {
+      el.style.setProperty('--reveal-delay', String(delay));
+    }
+    elementsToObserve.push(el);
+  }
+
+  if (!elementsToObserve.length) return;
+
+  if (!('IntersectionObserver' in window)) {
+    for (const el of elementsToObserve) el.classList.add('is-in');
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-in');
+        }
+      }
+    },
+    {
+      threshold: 0.12,
+      rootMargin: '0px 0px -36px 0px',
+    }
+  );
+
+  for (const el of elementsToObserve) {
+    observer.observe(el);
+  }
+}
+
+initScrollRevealAnimations();
+
+// ============================================================================
+// 11. HERO BURGER PARALLAX ON SCROLL
+// ============================================================================
+function initHeroParallax() {
+  const heroSection = document.querySelector('.hero');
+  if (!heroSection) return;
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let ticking = false;
+
+  function updateParallax() {
+    ticking = false;
+    if (reducedMotion.matches) {
+      heroSection.style.setProperty('--burger-parallax', '0px');
+      return;
+    }
+
+    const scrollY = window.scrollY || window.pageYOffset;
+    const heroHeight = heroSection.offsetHeight || 900;
+
+    if (scrollY <= heroHeight * 1.25) {
+      const offset = Math.round(scrollY * 0.32);
+      heroSection.style.setProperty('--burger-parallax', `${offset}px`);
+    }
+  }
+
+  function onScroll() {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(updateParallax);
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  updateParallax();
+}
+
+initHeroParallax();
